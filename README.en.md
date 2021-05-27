@@ -25,7 +25,26 @@ and develop their own new semantic segmentation methods.
 # Contributor
 xiaoyisd(524925587@qq.com)
 Norato(834184466@qq.com)
-
+bridge(1131156501@qq.com)
+ChanJiatao(chenjiatao777@163.com)
+LiuHongYe(470141216@qq.com)
+ChiJunlong(2869897445@qq.com)
+pallidlight(965504148@qq.com)
+TsaiKunzhao(562552741@qq.com)
+DingMingHao(294270681@qq.com)
+caijian(937747918@qq.com)
+HuangZhengBo(1219326125@qq.com)
+txzskywalker(73560446@qq.com)
+chenhuamin9527(359247454@qq.com)
+dongjianyu(1325895127@qq.com)
+Carina233(910780586@qq.com)
+LunarCM(708827045@qq.com)
+xay2001(1602357810@qq.com)
+xiaoyuzhau(1042958277@qq.com) 
+ChenXuechen(312117408@qq.com) 
+Hamilton北（1209233513@qq.com）
+huanghonghao(373658829@qq.com)
+linkaizhe(499780002@qq.com)
 
 ## Citation
 
