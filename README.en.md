@@ -24,6 +24,7 @@ and develop their own new semantic segmentation methods.
 
 # Contributor
 xiaoyisd(524925587@qq.com)
+Norato(834184466@qq.com)
 
 
 ## Citation
