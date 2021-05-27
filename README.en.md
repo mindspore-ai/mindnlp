@@ -23,7 +23,7 @@ community by providing a flexible as well as standardized toolkit to reimplement
 and develop their own new semantic segmentation methods.
 
 # Contributor
-
+xiaoyisd(524925587@qq.com)
 
 
 ## Citation
