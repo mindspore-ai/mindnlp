@@ -1,36 +1,40 @@
 # MindText
 
-#### Description
-{**When you're done, you can delete the content in this README and update the file with details for others getting started with your repository**}
+## Introduction
 
-#### Software Architecture
-Software architecture description
+MindText is an open source text toolbox based on MindSpore.
 
-#### Installation
-
-1.  xxxx
-2.  xxxx
-3.  xxxx
-
-#### Instructions
-
-1.  xxxx
-2.  xxxx
-3.  xxxx
-
-#### Contribution
-
-1.  Fork the repository
-2.  Create Feat_xxx branch
-3.  Commit your code
-4.  Create Pull Request
+The master branch works with **MindSPore 1.2**.
 
 
-#### Gitee Feature
+## License
 
-1.  You can use Readme\_XXX.md to support different languages, such as Readme\_en.md, Readme\_zh.md
-2.  Gitee blog [blog.gitee.com](https://blog.gitee.com)
-3.  Explore open source project [https://gitee.com/explore](https://gitee.com/explore)
-4.  The most valuable open source project [GVP](https://gitee.com/gvp)
-5.  The manual of Gitee [https://gitee.com/help](https://gitee.com/help)
-6.  The most popular members  [https://gitee.com/gitee-stars/](https://gitee.com/gitee-stars/)
+This project is released under the [Apache 2.0 license](LICENSE).
+
+## Feedbacks and Contact
+
+The dynamic version is still under development, if you find any issue or have an idea on new features, please don't hesitate to contact us via [Gitee Issues](https://gitee.com/mindspore/mindtext/issues).
+
+## Acknowledgement
+
+MindSpore is an open source project that welcome any contribution and feedback.
+We wish that the toolbox and benchmark could serve the growing research
+community by providing a flexible as well as standardized toolkit to reimplement existing methods
+and develop their own new semantic segmentation methods.
+
+# Contributor
+
+
+
+## Citation
+
+If you find this project useful in your research, please consider citing:
+
+```latex
+@misc{mindvsion2021,
+    title={{MindText}:MindSpore Vision Toolbox and Benchmark},
+    author={MindText Contributors},
+    howpublished = {\url{https://gitee.com/mindspore/mindtext}},
+    year={2021}
+}
+```
