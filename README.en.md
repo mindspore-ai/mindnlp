@@ -34,7 +34,6 @@ TsaiKunzhao(562552741@qq.com)
 DingMingHao(294270681@qq.com)
 caijian(937747918@qq.com)
 HuangZhengBo(1219326125@qq.com)
-huangsonglong(2802993151@qq.com)
 txzskywalker(73560446@qq.com)
 chenhuamin9527(359247454@qq.com)
 dongjianyu(1325895127@qq.com)
@@ -44,18 +43,14 @@ xay2001(1602357810@qq.com)
 xiaoyuzhau(1042958277@qq.com)
 lijianming(lijianming666666@163.com)
 ChenXuechen(312117408@qq.com)
-jmsyyds(1535276562@qq.com)
 xiaoyuzhau(1042958277@qq.com) 
 ChenXuechen(312117408@qq.com) 
 Hamilton北（1209233513@qq.com）
 huanghonghao(373658829@qq.com)
 linkaizhe(499780002@qq.com)
 LiangRio(2453372256@qq.com)
-Liyanlong(2373515564@qq.com)
-MChloe(2284161124@qq.com)
-M-Zif(lucas011014@qq.com)
-Rayen227(16607615570@163.com)
-7aY1 (389354380@qq.com)
+jamesonleong(jamesonleong@qq.com)
+
 ## Citation
 
 If you find this project useful in your research, please consider citing:
