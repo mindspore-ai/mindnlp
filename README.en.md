@@ -23,7 +23,7 @@ community by providing a flexible as well as standardized toolkit to reimplement
 and develop their own new semantic segmentation methods.
 
 # Contributor
-Phantom(947291834@qq.com)
+Phantom(947291834@qq.com)<br/>Minjie Hu(1249213249@qq.com)</br>
 xiaoyisd(524925587@qq.com)
 Norato(834184466@qq.com)
 LiHuamao123(LiHuamao123@foxmail.com)

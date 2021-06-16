@@ -23,7 +23,7 @@ def load_dataset(dataset_path,
                  rank_id=0,
                  bucket=None,
                  shuffle=True):
-    """dataset loader"""
+    """mindrecord-form dataset loader"""
 
     def batch_per_bucket(bucket_length, input_file):
         input_file = input_file + '_' + str(bucket_length) + '.mindrecord'
