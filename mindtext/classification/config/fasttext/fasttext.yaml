@@ -1,11 +1,11 @@
 # Builtin Configurations
 
 model_name: "fasttext"
-device_target: "CPU"
+device_target: "GPU"
 
 PREPROCESS:
   max_len: 467
-  mid_dir_path: "./output_train_data" # "" or no assign generate mindrecord_data directory
+  mid_dir_path: "./output_train_data"
 
 MODEL_PARAMETERS:
   vocab_size: 1383812

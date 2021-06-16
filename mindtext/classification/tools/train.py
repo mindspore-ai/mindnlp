@@ -13,23 +13,69 @@
 # limitations under the License.
 # ============================================================================
 """ MindText Classification training script. """
+import time
 from mindspore import context
-
-from ..utils import get_config, parse_args
-from ..dataset import create_dataset
-from ..models import build_model, create_loss, create_optimizer
-from ..models import Trainer
+from mindspore.common import set_seed
 from mindspore.train.callback import ModelCheckpoint, CheckpointConfig
-from mindspore.train.callback import TimeMonitor, LossMonitor
+from mindspore.train.callback import TimeMonitor
+from mindspore.train.callback import Callback
+
+from mindtext.classification.utils import get_config, parse_args
+from mindtext.classification.dataset import create_dataset
+from mindtext.classification.models import build_model, create_loss, create_optimizer, Trainer
+
+
+def get_ms_timestamp():
+    t = time.time()
+    return int(round(t * 1000))
+
+
+set_seed(5)
+
+
+class LossCallBack(Callback):
+    """
+    Monitor the loss in training.
+
+    If the loss is NAN or INF terminating training.
+
+    Note:
+        If per_print_times is 0 do not print loss.
+
+    Args:
+        per_print_times (int): Print loss every times. Default: 1.
+    """
+
+    def __init__(self, per_print_times=1, rank_ids=0):
+        super(LossCallBack, self).__init__()
+        if not isinstance(per_print_times, int) or per_print_times < 0:
+            raise ValueError("print_step must be int and >= 0.")
+        self._per_print_times = per_print_times
+        self.rank_id = rank_ids
+        self.time_stamp_first = get_ms_timestamp()
+
+    def step_end(self, run_context):
+        """Monitor the loss in training."""
+        global time_stamp_first
+        time_stamp_current = get_ms_timestamp()
+        cb_params = run_context.original_args()
+        print("time: {}, epoch: {}, step: {}, outputs are {}".format(time_stamp_current - self.time_stamp_first,
+                                                                     cb_params.cur_epoch_num,
+                                                                     cb_params.cur_step_num,
+                                                                     str(cb_params.net_outputs)))
+        with open("./loss_{}.log".format(self.rank_id), "a+") as f:
+            f.write("time: {}, epoch: {}, step: {}, loss: {}".format(
+                time_stamp_current - time_stamp_first,
+                cb_params.cur_epoch_num,
+                cb_params.cur_step_num,
+                str(cb_params.net_outputs.asnumpy())))
+            f.write('\n')
 
 
 def main(pargs):
-    '''
-
-    :param pargs:
-    :return:
-    '''
-
+    """
+    Train function
+    """
     # set config context
     config = get_config(pargs.config_path, overrides=pargs.override)
     context.set_context(mode=context.GRAPH_MODE,
@@ -49,7 +95,7 @@ def main(pargs):
     ckpt_callback = ModelCheckpoint(prefix=config.model_name,
                                     directory=config.TRAIN.save_ckpt_dir,
                                     config=ckpt_config)
-    loss_monitor = LossMonitor(per_print_times=2000)
+    loss_monitor = LossCallBack()
     time_monitor = TimeMonitor(data_size=dataset_train.get_dataset_size)
     callbacks = [time_monitor, loss_monitor, ckpt_callback]
 

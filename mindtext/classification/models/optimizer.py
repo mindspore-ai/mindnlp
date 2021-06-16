@@ -15,11 +15,10 @@
 """
  Produce the optimizer
 """
-
+import os
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore import dtype as mstype
-import os
 
 from mindtext.classification.utils.lr_schedule import polynomial_decay_scheduler
 

@@ -12,13 +12,28 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-""" """
-
+"""
+Base model segmentors
+"""
 import mindspore.nn as nn
 
-class BaseSegmentor(nn.Cell):
-    def __init__(self):
-        pass
 
-    def construct(self):
-        pass
+class BaseClassifier(nn.Cell):
+    """
+    Baseclassifier
+    """
+
+    def __init__(self, backbone, neck):
+        super(BaseClassifier, self).__init__()
+        self.backbone = backbone
+        self.neck = neck
+        if neck is not None:
+            self.with_neck = True
+        else:
+            self.with_neck = False
+
+    def construct(self, **x):
+        x = self.backbone(**x)
+        if self.with_neck:
+            x = self.neck(x)
+        return x
