@@ -1,0 +1,53 @@
+# Builtin Configurations
+
+model_name: "fasttext"
+device_target: "CPU"
+
+PREPROCESS:
+  max_len: 467
+  mid_dir_path: "./output_train_data" # "" or no assign generate mindrecord_data directory
+
+MODEL_PARAMETERS:
+  vocab_size: 1383812
+  embedding_dims: 16
+  num_class: 4
+
+OPTIMIZER:
+  function: "Adam"
+  lr: 0.2
+  min_lr: 0.000001
+  decay_steps: 115
+  warmup_steps: 400000
+  poly_lr_scheduler_power: 0.001
+
+TRAIN:
+  data_path: "E:/BaiduNetdiskDownload/fasttext/ag_news_csv/train.csv"
+  batch_size: 512
+  buckets: [64, 128, 467]
+  epochs: 5
+  epoch_count: 1
+  loss_function: "SoftmaxCrossEntropyWithLogits"
+  pretrain_ckpt_dir: ""
+  save_ckpt_steps: 116
+  save_ckpt_dir: "./"
+  keep_ckpt_max: 10
+  run_distribute: False
+  distribute_batch_size_gpu: 64
+
+VALID:
+  data_path: "E:/BaiduNetdiskDownload/fasttext/ag_news_csv/test.csv"
+  batch_size: 512
+  model_ckpt: ""
+  buckets: [467]
+
+INFER:
+  data_path: ""
+  mid_data_path: ""
+  batch_size: 512
+  model_ckpt: ""
+
+EXPORT:
+  device_id: 0
+  ckpt_file: ""
+  file_name: "fasttexts"
+  file_format: "AIR"
