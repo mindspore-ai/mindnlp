@@ -21,7 +21,7 @@ OPTIMIZER:
   poly_lr_scheduler_power: 0.001
 
 TRAIN:
-  data_path: "E:/BaiduNetdiskDownload/fasttext/ag_news_csv/train.csv"
+  data_path: ""
   batch_size: 512
   buckets: [64, 128, 467]
   epochs: 5
@@ -35,7 +35,7 @@ TRAIN:
   distribute_batch_size_gpu: 64
 
 VALID:
-  data_path: "E:/BaiduNetdiskDownload/fasttext/ag_news_csv/test.csv"
+  data_path: ""
   batch_size: 512
   model_ckpt: ""
   buckets: [467]
@@ -49,5 +49,5 @@ INFER:
 EXPORT:
   device_id: 0
   ckpt_file: ""
-  file_name: "fasttexts"
+  file_name: "fasttext"
   file_format: "AIR"

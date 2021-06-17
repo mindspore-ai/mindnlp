@@ -56,7 +56,6 @@ class LossCallBack(Callback):
 
     def step_end(self, run_context):
         """Monitor the loss in training."""
-        global time_stamp_first
         time_stamp_current = get_ms_timestamp()
         cb_params = run_context.original_args()
         print("time: {}, epoch: {}, step: {}, outputs are {}".format(time_stamp_current - self.time_stamp_first,
@@ -65,7 +64,7 @@ class LossCallBack(Callback):
                                                                      str(cb_params.net_outputs)))
         with open("./loss_{}.log".format(self.rank_id), "a+") as f:
             f.write("time: {}, epoch: {}, step: {}, loss: {}".format(
-                time_stamp_current - time_stamp_first,
+                time_stamp_current - self.time_stamp_first,
                 cb_params.cur_epoch_num,
                 cb_params.cur_step_num,
                 str(cb_params.net_outputs.asnumpy())))

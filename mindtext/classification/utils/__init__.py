@@ -16,4 +16,3 @@
 Init utils.
 """
 from .config import parse_args, parse_config, get_config, override_config
-from .data_utils import write_to_mindrecord

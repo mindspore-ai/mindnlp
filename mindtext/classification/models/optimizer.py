@@ -37,7 +37,6 @@ def custom_optimizer(param, config):
     config_optimizer = config.OPTIMIZER
     update_steps = config.TRAIN.epochs * config.OPTIMIZER.decay_steps
     rank_size = os.getenv("RANK_SIZE")
-    print("rank_size:", rank_size)
     if isinstance(rank_size, int):
         raise ValueError("RANK_SIZE must be integer")
     if rank_size is not None and int(rank_size) > 1:

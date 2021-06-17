@@ -42,6 +42,7 @@ def create_dataset(config):
     if len(temp_dir) == 0:
         temp_dir = default_temp_dir
 
+    train_data_example, test_data_example = None, None
     if not os.path.exists(os.path.join(os.getcwd(), temp_dir)):
         g_d = FastTextDataPreProcess(train_path=config.TRAIN.data_path,
                                      test_file=config.VALID.data_path,
