@@ -17,8 +17,8 @@ Build model and trainer
 """
 from mindspore.train import Model
 
-from .backbones import FastText, FastTextTrainOneStep
-from .segmentors import BaseClassifier
+from .backbones.fasttext import FastText, FastTextTrainOneStep
+from .classifiers import BaseClassifier
 
 MODEL_LIST = {'FastText': FastTextTrainOneStep}
 
