@@ -52,25 +52,20 @@ python setup.py install
 
 ## 数据准备
 
-进入`mindtext/classification`目录。
-
-```bash
-cd mindtext/classification
-```
 
 下载并解压数据集.
 
 你可以从数据集下载页面下载，并按下方目录结构放置：
 
 ```text
-./datasets/ag_news_csv
+/root/fasttext/ag_news_csv
 ├── ag_news_csv
 │   ├── train.csv
 │   └── text.csv
-├── DBPedia_ontology
+├── dbpedia_csv
 │   ├── train.csv
 │   └── text.csv
-├── Yelp_reviews
+├── yelp_review_polarity_csv
 │   ├── train.csv
 │   └── text.csv
 
@@ -86,45 +81,45 @@ cd mindtext/classification
 # Builtin Configurations
 
 model_name: "fasttext"      # 模型名称
-device_target: "CPU"        # 设备，可选GPU, ASCEND
+device_target: "GPU"        # 设备，可选GPU, ASCEND
 
 MODEL_PARAMETERS:           # 模型参数
-  vocab_size: 6414979       # 词表大小
+  vocab_size: 1383812       # 词表大小
   embedding_dims: 16        # 词嵌入大小
-  num_class: 2              # 类别数
+  num_class: 4              # 类别数
 
 OPTIMIZER:                  # 优化器参数
   function: "Adam"          # 优化器类型，以Adam优化器为例   
   params:
-    lr: 0.30                # 学习率
+    lr: 0.20                # 学习率
     min_lr: 0.000001        # 最小学习率
-    decay_steps: 549        # 学习率衰减补偿
+    decay_steps: 115        # 学习率衰减补偿
     warmup_steps: 400000                # warm_up步长
-    poly_lr_scheduler_power: 0.5        # 学习率策略
+    poly_lr_scheduler_power: 0.001        # 学习率策略
 
 TRAIN:                                      # 训练参数
   params:
-    data_path: ""                           # 训练集路径
+    data_path: "/root/fasttext/ag_news_csv/train.csv"   # 训练集路径
     mid_data_path: ""                       # 训练集预处理中间数据路径，如不指定，默认脚本当前路径
-    batch_size: 2048                        # batch_size
-    buckets: [64, 128, 256, 512, 2955]      # 训练集数据加载块大小
+    batch_size: 512                         # batch_size
+    buckets: [64, 128, 467]                 # 训练集数据加载块大小
     epoch: 5                                # 训练epoch数
     epoch_count: 1                         
-    loss_function: "CrossEntropy"           # 损失函数类型
+    loss_function: "SoftmaxCrossEntropyWithLogits"  # 损失函数类型
     pretrain_ckpt_dir: ""                   # 断点训练检查点
-    save_ckpt_steps: 549                    # 检查点保存步长
+    save_ckpt_steps: 116                    # 检查点保存步长
     save_ckpt_dir: "./"                     # 检查点保存路径
     keep_ckpt_max: 10                       # 最大检查点数
     run_distribute: False                   # 分布式训练，默认False
-    distribute_batch_size_gpu: 512          # 分布式训练单卡batch_size
+    distribute_batch_size_gpu: 64           # 分布式训练单卡batch_size
 
 VALID:                                          # 测试参数
   params:
-    data_path: ""                               # 测试集路径
+    data_path: "/roor/fasttext/ag_news_csv/test.csv"    # 测试集路径
     mid_data_path: ""                           # 测试集预处理中间数据路径，如不指定，默认脚本当前路径
-    batch_size: 2048                            # batch_size
+    batch_size: 512                             # batch_size
     model_ckpt: ""                              # 模型检查点
-    test_buckets: [64, 128, 256, 512, 2955]     # 测试集数据加载块大小
+    test_buckets: [467]     # 测试集数据加载块大小
 
 INFER:                          # 推断参数
   params:
@@ -141,11 +136,16 @@ EXPORT:                         # 模型导出参数
 ```
 
 ## 模型训练
+进入`mindtext/classification/tools`目录。
 
-数据处理完成之后，执行下面的命令开始模型训练：
+```bash
+cd mindtext/classification/tools
+```
+
+执行下面的命令开始模型训练：
 
 ```shell
-python tools/train.py -c configs/fasttext/fasttext.yaml
+python train.py -c ../configs/fasttext/fasttext.yaml
 ```
 
 - `-c` 参数是指定训练的配置文件路径，训练的具体超参数可查看`yaml`文件  

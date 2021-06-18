@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """ MindText Classification training script. """
+import sys
 import time
 from mindspore import context
 from mindspore.common import set_seed
@@ -23,6 +24,9 @@ from mindspore.train.callback import Callback
 from mindtext.classification.utils import get_config, parse_args
 from mindtext.classification.dataset import create_dataset
 from mindtext.classification.models import build_model, create_loss, create_optimizer, Trainer
+
+
+sys.path.append("../../../")
 
 
 def get_ms_timestamp():
