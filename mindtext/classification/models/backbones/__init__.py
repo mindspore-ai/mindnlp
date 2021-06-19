@@ -15,4 +15,4 @@
 """
 Init backbones
 """
-from .fasttext import FastText, FastTextTrainOneStep
+from .fasttext import FastText, FastTextTrainOneStep, FastTextInferCell

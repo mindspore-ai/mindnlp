@@ -12,8 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-""" MindText Classification training script. """
+"""
+MindText Classification train script.
+"""
 import sys
+
+sys.path.append("../../../")
 import time
 from mindspore import context
 from mindspore.common import set_seed
@@ -23,10 +27,7 @@ from mindspore.train.callback import Callback
 
 from mindtext.classification.utils import get_config, parse_args
 from mindtext.classification.dataset import create_dataset
-from mindtext.classification.models import build_model, create_loss, create_optimizer, Trainer
-
-
-sys.path.append("../../../")
+from mindtext.classification.models import build_model, create_loss, create_optimizer, Model
 
 
 def get_ms_timestamp():
@@ -84,7 +85,8 @@ def main(pargs):
     context.set_context(mode=context.GRAPH_MODE,
                         device_target=config.device_target)
 
-    dataset_train = create_dataset(config)
+    # load mindrecord dataset
+    dataset_train = create_dataset(config, select_dataset="train")
 
     # set network, loss, optimizer
     network = build_model(config)
@@ -103,9 +105,9 @@ def main(pargs):
     callbacks = [time_monitor, loss_monitor, ckpt_callback]
 
     # init the Trainer
-    model = Trainer(network,
-                    network_loss,
-                    network_opt)
+    model = Model(network,
+                  network_loss,
+                  network_opt)
 
     print(f'[Start training `{config.model_name}`]')
     print("=" * 80)

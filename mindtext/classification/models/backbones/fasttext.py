@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,7 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-"""FastText model."""
+"""
+FastText model
+"""
 from mindspore.common.initializer import XavierUniform
 from mindspore import dtype as mstype
 from mindspore import nn
@@ -139,11 +141,12 @@ class FastTextNetWithLoss(nn.Cell):
 
 class FastTextTrainOneStep(nn.Cell):
     def __init__(self, net, loss, optimizer, sens=1.0):
-        super(FastTextTrainOneStep, self).__init__()
+        super(FastTextTrainOneStep, self).__init__(auto_prefix=False)
         self.network = FastTextNetWithLoss(net, loss)
+        self.network.init_parameters_data()
         self.optimizer = optimizer
         self.weights = ParameterTuple(self.network.trainable_params())
-        self.grad = GradOperation(get_by_list=True)
+        self.grad = GradOperation(get_by_list=True, sens_param=True)
         self.sens = sens
         self.reducer_flag = False
         self.parallel_mode = context.get_auto_parallel_context("parallel_mode")
@@ -167,9 +170,41 @@ class FastTextTrainOneStep(nn.Cell):
         loss = self.network(src_token_text,
                             src_tokens_text_length,
                             label_idx_tag)
-        grads = self.grad(self.network, weights)
-        grads = grads(src_token_text, src_tokens_text_length, label_idx_tag)
+        grads = self.grad(self.network, weights)(src_token_text,
+                                                 src_tokens_text_length,
+                                                 label_idx_tag,
+                                                 self.cast(F.tuple_to_array((self.sens,)),
+                                                           mstype.float32))
         grads = self.hyper_map(F.partial(clip_grad, GRADIENT_CLIP_TYPE, GRADIENT_CLIP_VALUE), grads)
-
+        if self.reducer_flag:
+            # apply grad reducer on grads
+            grads = self.grad_reducer(grads)
         succ = self.optimizer(grads)
         return F.depend(loss, succ)
+
+
+class FastTextInferCell(nn.Cell):
+    """
+    Encapsulation class of FastText network infer.
+
+    Args:
+        network (nn.Cell): FastText model.
+
+    Returns:
+        Tuple[Tensor, Tensor], predicted_ids
+    """
+
+    def __init__(self, network):
+        super(FastTextInferCell, self).__init__(auto_prefix=False)
+        self.network = network
+        self.argmax = P.ArgMaxWithValue(axis=1, keep_dims=True)
+        self.log_softmax = nn.LogSoftmax(axis=1)
+
+    def construct(self, src_tokens, src_tokens_length):
+        """construct fasttext infer cell"""
+        inputs = {"src_tokens": src_tokens, "src_token_length": src_tokens_length}
+        prediction = self.network(**inputs)
+        predicted_idx = self.log_softmax(prediction)
+        predicted_idx, _ = self.argmax(predicted_idx)
+
+        return predicted_idx

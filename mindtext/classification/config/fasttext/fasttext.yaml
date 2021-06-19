@@ -5,7 +5,7 @@ device_target: "GPU"
 
 PREPROCESS:
   max_len: 467
-  mid_dir_path: "./output_train_data"
+  mid_dir_path: "./temp_data"
 
 MODEL_PARAMETERS:
   vocab_size: 1383812
@@ -16,7 +16,7 @@ OPTIMIZER:
   function: "Adam"
   lr: 0.2
   min_lr: 0.000001
-  decay_steps: 115
+  decay_steps: 236
   warmup_steps: 400000
   poly_lr_scheduler_power: 0.001
 

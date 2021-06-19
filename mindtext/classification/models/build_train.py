@@ -15,25 +15,63 @@
 """
 Build model and trainer
 """
-from mindspore.train import Model
+from tqdm import tqdm
+from mindspore.train import Model as MM
+from mindspore import Tensor
+from mindspore import dtype as mstype
 
-from .backbones.fasttext import FastText, FastTextTrainOneStep
+from sklearn.metrics import accuracy_score
+import numpy as np
+
+from .backbones.fasttext import FastText, FastTextTrainOneStep, FastTextInferCell
 from .classifiers import BaseClassifier
 
-MODEL_LIST = {'FastText': FastTextTrainOneStep}
+MODEL_LIST = {'FastText': (FastTextTrainOneStep, FastTextInferCell)}
 
 
-class Trainer:
-    def __init__(self, net, loss, optimizer):
+class Model:
+    def __init__(self, net, loss, optimizer, metrics=None):
         if net.backbone.__class__.__name__ not in MODEL_LIST.keys():
             raise ValueError("model not found in {}".format(MODEL_LIST.keys()))
-        MODEL_TRAIN = MODEL_LIST[net.backbone.__class__.__name__]
+        MODEL_TRAIN, MODEL_INFER = MODEL_LIST[net.backbone.__class__.__name__]
         self.train_one_step = MODEL_TRAIN(net, loss, optimizer)
         self.train_one_step.set_train(True)
-        self.Model = Model(self.train_one_step)
+        self.Train_Model = MM(self.train_one_step)
+        self.Infer_Model = MODEL_INFER(net)
+        self.metrics = metrics
 
     def train(self, epoch, train_dataset, callbacks, dataset_sink_mode=False):
-        self.Model.train(epoch, train_dataset, callbacks, dataset_sink_mode)
+        self.Train_Model.train(epoch, train_dataset, callbacks, dataset_sink_mode)
+
+    def eval(self, dataset):
+        predictions = []
+        target_sens = []
+        inputs = {}
+        inputs_name = []
+        label_name = None
+        for batch in tqdm(dataset.create_dict_iterator(output_numpy=True, num_epochs=1),
+                          total=dataset.get_dataset_size()):
+            if len(inputs_name) == 0:
+                inputs_name = list(batch.keys())[0:-1]
+                label_name = list(batch.keys())[-1]
+            target_sens.append(batch[label_name])
+            for i in inputs_name:
+                inputs[i] = Tensor(batch[i], mstype.int32)
+            predicted_idx = self.Infer_Model(**inputs)
+            predictions.append(predicted_idx.asnumpy())
+            inputs = {}
+        target_sens = np.array(target_sens).flatten()
+        merge_target_sens = []
+        for target_sen in target_sens:
+            merge_target_sens.extend(target_sen)
+        target_sens = merge_target_sens
+        predictions = np.array(predictions).flatten()
+        merge_predictions = []
+        for prediction in predictions:
+            merge_predictions.extend(prediction)
+        predictions = merge_predictions
+        acc = accuracy_score(target_sens, predictions)
+        return acc, target_sens, predictions
 
 
 def build_model(config):

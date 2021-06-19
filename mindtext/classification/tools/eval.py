@@ -12,10 +12,60 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-""" """
+"""
+MindText Classification eval script.
+"""
+import sys
 
-def main():
-    pass
+sys.path.append("../../../")
+from sklearn.metrics import classification_report
+from mindspore import context
+
+from mindspore.train.serialization import load_checkpoint, load_param_into_net
+from mindspore.nn.metrics import Accuracy
+
+from mindtext.classification.utils import get_config, parse_args
+from mindtext.classification.dataset import create_dataset
+from mindtext.classification.models import build_model, create_loss, create_optimizer, Model
+
+
+def main(pargs):
+    """
+    eval function
+    """
+    # set config context
+    config = get_config(pargs.config_path, overrides=pargs.override)
+    context.set_context(mode=context.GRAPH_MODE,
+                        device_target=config.device_target)
+
+    # load mindrecord dataset
+    dataset_eval = create_dataset(config, select_dataset="valid")
+
+    # set network, loss, optimizer
+    network = build_model(config)
+    network_loss = create_loss(config)
+    network_opt = create_optimizer(network.trainable_params(), config)
+
+    # load pretrain model
+    param_dict = load_checkpoint(config.VALID.model_ckpt)
+    load_param_into_net(network, param_dict)
+
+    # init the whole Model
+    model = Model(network,
+                  network_loss,
+                  network_opt,
+                  metrics={"Accuracy": Accuracy()})
+
+    # begin to eval
+    print(f'[Start eval `{config.model_name}`]')
+    print("=" * 80)
+    acc, target_sens, predictions = model.eval(dataset_eval)
+    result_report = classification_report(target_sens, predictions, target_names=['0', '1', '2', '3'])
+    print("********Accuracy: ", acc)
+    print(result_report)
+    print(f'[End of eval `{config.model_name}`]')
+
 
 if __name__ == '__main__':
-    main()
+    args = parse_args()
+    main(args)

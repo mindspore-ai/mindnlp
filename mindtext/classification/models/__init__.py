@@ -15,6 +15,6 @@
 """
 Init models
 """
-from .build_train import build_model, Trainer
+from .build_train import build_model, Model
 from .loss import create_loss
 from .optimizer import create_optimizer
