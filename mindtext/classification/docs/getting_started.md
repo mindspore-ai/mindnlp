@@ -148,4 +148,31 @@ cd mindtext/classification/tools
 python train.py -c ../configs/fasttext/fasttext.yaml
 ```
 
+## 模型评估
+进入`mindtext/classification/tools`目录。
+
+执行下面的命令开始模型评估：
+
+```shell
+python eval.py -c ../configs/fasttext/fasttext.yaml
+```
+
+## 模型导出
+进入`mindtext/classification/tools`目录。
+
+执行下面的命令开始模型导出：
+
+```shell
+python export.py -c ../configs/fasttext/fasttext.yaml
+```
+
+## 模型预测
+进入`mindtext/classification/tools`目录。
+
+执行下面的命令开始模型预测：
+
+```shell
+python infer.py -c ../configs/fasttext/fasttext.yaml
+```
+
 - `-c` 参数是指定训练的配置文件路径，训练的具体超参数可查看`yaml`文件  
