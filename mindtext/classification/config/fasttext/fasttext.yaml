@@ -42,9 +42,9 @@ VALID:
 
 INFER:
   data_path: ""
-  mid_data_path: ""
   batch_size: 512
   model_ckpt: ""
+  buckets: [467]
 
 EXPORT:
   device_id: 0

@@ -32,8 +32,8 @@ class BaseClassifier(nn.Cell):
         else:
             self.with_neck = False
 
-    def construct(self, **x):
-        x = self.backbone(**x)
+    def construct(self, *x):
+        x = self.backbone(*x)
         if self.with_neck:
             x = self.neck(x)
         return x

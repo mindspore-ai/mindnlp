@@ -16,3 +16,4 @@
 Init datasets
 """
 from .dataset import create_dataset
+from .FastTextDataPreProcess import FastTextDataPreProcess

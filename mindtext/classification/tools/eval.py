@@ -60,7 +60,8 @@ def main(pargs):
     print(f'[Start eval `{config.model_name}`]')
     print("=" * 80)
     acc, target_sens, predictions = model.eval(dataset_eval)
-    result_report = classification_report(target_sens, predictions, target_names=['0', '1', '2', '3'])
+    result_report = classification_report(target_sens, predictions,
+                                          target_names=[str(i) for i in range(int(config.MODEL_PARAMETERS.num_class))])
     print("********Accuracy: ", acc)
     print(result_report)
     print(f'[End of eval `{config.model_name}`]')

@@ -25,24 +25,19 @@ from sklearn.feature_extraction import FeatureHasher
 class FastTextDataPreProcess():
     """FastText data preprocess"""
 
-    def __init__(self, train_path,
-                 test_file,
-                 max_length,
-                 class_num,
-                 ngram,
-                 train_feature_dict,
-                 buckets,
-                 test_feature_dict,
-                 test_bucket,
-                 is_hashed,
-                 feature_size):
-        self.train_path = train_path
-        self.test_path = test_file
+    def __init__(self, data_path=None,
+                 max_length=None,
+                 class_num=None,
+                 ngram=None,
+                 feature_dict=None,
+                 buckets=None,
+                 is_hashed=None,
+                 feature_size=None,
+                 is_train=True):
+        self.data_path = data_path
         self.max_length = max_length
         self.class_num = class_num
-        self.train_feature_dict = train_feature_dict
-        self.test_feature_dict = test_feature_dict
-        self.test_bucket = test_bucket
+        self.feature_dict = feature_dict
         self.is_hashed = is_hashed
         self.feature_size = feature_size
         self.buckets = buckets
@@ -58,6 +53,7 @@ class FastTextDataPreProcess():
         self.word2vec['UNK'] = 1
         self.vec2words[1] = 'UNK'
         self.str_html = re.compile(r'<[^>]+>')
+        self.is_train = is_train
 
     def common_block(self, _pair_sen, spacy_nlp):
         """common block for data preprocessing"""
@@ -88,97 +84,78 @@ class FastTextDataPreProcess():
 
     def load(self):
         """data preprocess loader"""
-        train_dataset_list = []
-        test_dataset_list = []
+        dataset_list = []
         spacy_nlp = spacy.load('en_core_web_lg', disable=['parser', 'tagger', 'ner'])
         spacy_nlp.add_pipe(spacy_nlp.create_pipe('sentencizer'))
 
-        print("Begin to process train data...")
-        with open(self.train_path, 'r', newline='', encoding='utf-8') as src_file:
-            reader = csv.reader(src_file, delimiter=",", quotechar='"')
-            for _, _pair_sen in enumerate(reader):
-                src_tokens, src_tokens_length, label_idx = self.common_block(_pair_sen=_pair_sen,
-                                                                             spacy_nlp=spacy_nlp)
-                train_dataset_list.append([src_tokens, src_tokens_length, label_idx])
+        if self.is_train:
+            with open(self.data_path, 'r', newline='', encoding='utf-8') as data_file:
+                reader = csv.reader(data_file, delimiter=",", quotechar='"')
+                for _, _pair_sen in enumerate(reader):
+                    src_tokens, src_tokens_length, label_idx = self.common_block(_pair_sen=_pair_sen,
+                                                                                 spacy_nlp=spacy_nlp)
+                    dataset_list.append([src_tokens, src_tokens_length, label_idx])
+        else:
+            with open(self.data_path, 'r', newline='', encoding='utf-8') as data_file:
+                reader2 = csv.reader(data_file, delimiter=",", quotechar='"')
+                for _, _test_sen in enumerate(reader2):
+                    label_idx = int(_test_sen[0]) - 1
+                    if len(_test_sen) == 3:
+                        src_tokens = self.input_preprocess(src_text1=_test_sen[1],
+                                                           src_text2=_test_sen[2],
+                                                           spacy_nlp=spacy_nlp,
+                                                           train_mode=False)
+                        src_tokens_length = len(src_tokens)
+                    elif len(_test_sen) == 2:
+                        src_tokens = self.input_preprocess(src_text1=_test_sen[1],
+                                                           src_text2=None,
+                                                           spacy_nlp=spacy_nlp,
+                                                           train_mode=False)
+                        src_tokens_length = len(src_tokens)
+                    elif len(_test_sen) == 4:
+                        if _test_sen[2]:
+                            sen_o_t = _test_sen[1] + ' ' + _test_sen[2]
+                        else:
+                            sen_o_t = _test_sen[1]
+                        src_tokens = self.input_preprocess(src_text1=sen_o_t,
+                                                           src_text2=_test_sen[3],
+                                                           spacy_nlp=spacy_nlp,
+                                                           train_mode=False)
+                        src_tokens_length = len(src_tokens)
 
-        print("Begin to process test data...")
-        with open(self.test_path, 'r', newline='', encoding='utf-8') as test_file:
-            reader2 = csv.reader(test_file, delimiter=",", quotechar='"')
-            for _, _test_sen in enumerate(reader2):
-                label_idx = int(_test_sen[0]) - 1
-                if len(_test_sen) == 3:
-                    src_tokens = self.input_preprocess(src_text1=_test_sen[1],
-                                                       src_text2=_test_sen[2],
-                                                       spacy_nlp=spacy_nlp,
-                                                       train_mode=False)
-                    src_tokens_length = len(src_tokens)
-                elif len(_test_sen) == 2:
-                    src_tokens = self.input_preprocess(src_text1=_test_sen[1],
-                                                       src_text2=None,
-                                                       spacy_nlp=spacy_nlp,
-                                                       train_mode=False)
-                    src_tokens_length = len(src_tokens)
-                elif len(_test_sen) == 4:
-                    if _test_sen[2]:
-                        sen_o_t = _test_sen[1] + ' ' + _test_sen[2]
-                    else:
-                        sen_o_t = _test_sen[1]
-                    src_tokens = self.input_preprocess(src_text1=sen_o_t,
-                                                       src_text2=_test_sen[3],
-                                                       spacy_nlp=spacy_nlp,
-                                                       train_mode=False)
-                    src_tokens_length = len(src_tokens)
-
-                test_dataset_list.append([src_tokens, src_tokens_length, label_idx])
+                    dataset_list.append([src_tokens, src_tokens_length, label_idx])
 
         if self.is_hashed:
             print("Begin to Hashing Trick......")
             features_num = self.feature_size
             fh = FeatureHasher(n_features=features_num, alternate_sign=False)
             print("FeatureHasher features..", features_num)
-            self.hash_trick(fh, train_dataset_list)
-            self.hash_trick(fh, test_dataset_list)
+            self.hash_trick(fh, dataset_list)
             print("Hashing Done....")
 
-        # pad train dataset
-        train_dataset_list_length = len(train_dataset_list)
-        test_dataset_list_length = len(test_dataset_list)
-        for l in range(train_dataset_list_length):
-            bucket_length = self._get_bucket_length(train_dataset_list[l][0], self.buckets)
-            while len(train_dataset_list[l][0]) < bucket_length:
-                train_dataset_list[l][0].append(self.word2vec['PAD'])
-            train_dataset_list[l][1] = len(train_dataset_list[l][0])
+        # pad dataset
+        dataset_list_length = len(dataset_list)
+        for l in range(dataset_list_length):
+            bucket_length = self._get_bucket_length(dataset_list[l][0], self.buckets)
+            while len(dataset_list[l][0]) < bucket_length:
+                dataset_list[l][0].append(self.word2vec['PAD'])
+            dataset_list[l][1] = len(dataset_list[l][0])
 
-        # pad test dataset
-        for j in range(test_dataset_list_length):
-            test_bucket_length = self._get_bucket_length(test_dataset_list[j][0], self.test_bucket)
-            while len(test_dataset_list[j][0]) < test_bucket_length:
-                test_dataset_list[j][0].append(self.word2vec['PAD'])
-            test_dataset_list[j][1] = len(test_dataset_list[j][0])
-
-        train_example_data = []
-        test_example_data = []
-        for idx in range(train_dataset_list_length):
-            train_example_data.append({
-                "src_tokens": train_dataset_list[idx][0],
-                "src_tokens_length": train_dataset_list[idx][1],
-                "label_idx": train_dataset_list[idx][2],
+        example_data = []
+        for idx in range(dataset_list_length):
+            example_data.append({
+                "src_tokens": dataset_list[idx][0],
+                "src_tokens_length": dataset_list[idx][1],
+                "label_idx": dataset_list[idx][2],
             })
-            for key in self.train_feature_dict:
-                if key == train_example_data[idx]['src_tokens_length']:
-                    self.train_feature_dict[key].append(train_example_data[idx])
-        for h in range(test_dataset_list_length):
-            test_example_data.append({
-                "src_tokens": test_dataset_list[h][0],
-                "src_tokens_length": test_dataset_list[h][1],
-                "label_idx": test_dataset_list[h][2],
-            })
-            for key in self.test_feature_dict:
-                if key == test_example_data[h]['src_tokens_length']:
-                    self.test_feature_dict[key].append(test_example_data[h])
-        print("train vocab size is ", len(self.word2vec))
+            for key in self.feature_dict:
+                if key == example_data[idx]['src_tokens_length']:
+                    self.feature_dict[key].append(example_data[idx])
 
-        return self.train_feature_dict, self.test_feature_dict
+        if self.is_train:
+            print("train vocab size is ", len(self.word2vec))
+
+        return self.feature_dict
 
     def input_preprocess(self, src_text1, src_text2, spacy_nlp, train_mode):
         """data preprocess func"""
@@ -251,3 +228,15 @@ class FastTextDataPreProcess():
                 for _ in range(int(d)):
                     sparse2bow.append(idc + 1)
             e[0] = sparse2bow
+
+    def vocab_to_txt(self, path):
+        with open(path, "w") as f:
+            for k, v in self.word2vec.items():
+                f.write(k + "\t" + str(v) + "\n")
+
+    def read_vocab_txt(self, path):
+        with open(path, "r") as f:
+            lines = f.readlines()
+            for i, word in enumerate(lines):
+                s = word.split("\t")
+                self.word2vec[s[0]] = i

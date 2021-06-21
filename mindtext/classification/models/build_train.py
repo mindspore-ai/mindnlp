@@ -30,18 +30,21 @@ MODEL_LIST = {'FastText': (FastTextTrainOneStep, FastTextInferCell)}
 
 
 class Model:
-    def __init__(self, net, loss, optimizer, metrics=None):
+    def __init__(self, net, loss=None, optimizer=None, metrics=None):
+        self.net = net
+        self.loss = loss
+        self.optimizer = optimizer
+        self.metrics = metrics
         if net.backbone.__class__.__name__ not in MODEL_LIST.keys():
             raise ValueError("model not found in {}".format(MODEL_LIST.keys()))
-        MODEL_TRAIN, MODEL_INFER = MODEL_LIST[net.backbone.__class__.__name__]
-        self.train_one_step = MODEL_TRAIN(net, loss, optimizer)
-        self.train_one_step.set_train(True)
-        self.Train_Model = MM(self.train_one_step)
-        self.Infer_Model = MODEL_INFER(net)
-        self.metrics = metrics
+        self.MODEL_TRAIN, self.MODEL_INFER = MODEL_LIST[net.backbone.__class__.__name__]
+        self.Infer_Model = self.MODEL_INFER(self.net)
 
     def train(self, epoch, train_dataset, callbacks, dataset_sink_mode=False):
-        self.Train_Model.train(epoch, train_dataset, callbacks, dataset_sink_mode)
+        train_one_step = self.MODEL_TRAIN(self.net, self.loss, self.optimizer)
+        train_one_step.set_train(True)
+        Train_Model = MM(train_one_step)
+        Train_Model.train(epoch, train_dataset, callbacks, dataset_sink_mode)
 
     def eval(self, dataset):
         predictions = []

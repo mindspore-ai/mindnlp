@@ -87,6 +87,7 @@ def main(pargs):
 
     # load mindrecord dataset
     dataset_train = create_dataset(config, select_dataset="train")
+    config.OPTIMIZER.decay_steps = dataset_train.get_dataset_size()
 
     # set network, loss, optimizer
     network = build_model(config)
@@ -101,7 +102,7 @@ def main(pargs):
                                     directory=config.TRAIN.save_ckpt_dir,
                                     config=ckpt_config)
     loss_monitor = LossCallBack()
-    time_monitor = TimeMonitor(data_size=dataset_train.get_dataset_size)
+    time_monitor = TimeMonitor(data_size=dataset_train.get_dataset_size())
     callbacks = [time_monitor, loss_monitor, ckpt_callback]
 
     # init the Trainer

@@ -131,8 +131,7 @@ class FastTextNetWithLoss(nn.Cell):
         """
         FastText network with loss.
         """
-        inputs = {"src_tokens": src_tokens, "src_token_length": src_tokens_lengths}
-        predict_score = self.fasttext(**inputs)
+        predict_score = self.fasttext(src_tokens, src_tokens_lengths)
         label_idx = self.squeeze(label_idx)
         predict_score = self.loss_func(predict_score, label_idx)
 
@@ -202,8 +201,7 @@ class FastTextInferCell(nn.Cell):
 
     def construct(self, src_tokens, src_tokens_length):
         """construct fasttext infer cell"""
-        inputs = {"src_tokens": src_tokens, "src_token_length": src_tokens_length}
-        prediction = self.network(**inputs)
+        prediction = self.network(src_tokens, src_tokens_length)
         predicted_idx = self.log_softmax(prediction)
         predicted_idx, _ = self.argmax(predicted_idx)
 
