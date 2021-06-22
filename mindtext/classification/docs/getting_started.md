@@ -44,10 +44,12 @@ git clone https://gitee.com/mindspore/mindtext.git
 cd mindtext
 ```
 
-//**TODO**: 安装
+所需环境：
 
 ```bash
-python setup.py install
+pip install sklearn
+pip install spacy==2.3.1
+python -m spacy download en_core_web_lg==2.3.1
 ```
 
 ## 数据准备

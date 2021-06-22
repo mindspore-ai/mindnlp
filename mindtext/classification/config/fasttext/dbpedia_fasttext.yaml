@@ -1,0 +1,53 @@
+# Builtin Configurations
+
+model_name: "fasttext"
+device_target: "GPU"
+
+PREPROCESS:
+  max_len: 3013
+  mid_dir_path: "./temp_data"
+
+MODEL_PARAMETERS:
+  vocab_size: 6596536
+  embedding_dims: 16
+  num_class: 14
+
+OPTIMIZER:
+  function: "Adam"
+  lr: 0.8
+  min_lr: 0.000001
+  decay_steps: 549
+  warmup_steps: 400000
+  poly_lr_scheduler_power: 0.5
+
+TRAIN:
+  data_path: "/root/fasttext/dbpedia_csv/train.csv"
+  batch_size: 4096
+  buckets: [64, 128, 256,512,3013]
+  epochs: 5
+  epoch_count: 1
+  loss_function: "SoftmaxCrossEntropyWithLogits"
+  pretrain_ckpt_dir: ""
+  save_ckpt_steps: 548
+  save_ckpt_dir: "./ckpt_dbpedia"
+  keep_ckpt_max: 10
+  run_distribute: False
+  distribute_batch_size_gpu: 512
+
+VALID:
+  data_path: "/root/fasttext/dbpedia_csv/test.csv"
+  batch_size: 512
+  model_ckpt: "/root/HongYeTest/mindtext/mindtext/classification/tools/ckpt_dbpedia/fasttext-5_140.ckpt"
+  buckets: [64,128,256,512,1120]
+
+INFER:
+  data_path: "/root/fasttext/ag_news_csv/test.csv"
+  batch_size: 512
+  model_ckpt: ""
+  buckets: [467]
+
+EXPORT:
+  device_id: 0
+  ckpt_file: "/root/HongYeTest/mindtext/mindtext/classification/tools/ckpt_dbpedia/fasttext-5_140.ckpt"
+  file_name: "fasttext"
+  file_format: "AIR"

@@ -56,7 +56,7 @@ def main(pargs):
     process = FastTextDataPreProcess(ngram=2)
     process.read_vocab_txt(os.path.join(os.getcwd(), config.PREPROCESS.mid_dir_path, "vocab.txt"))
     data = pd.read_csv(config.INFER.data_path, names=["idx", "seq1", "seq2"])
-    
+    data.fillna("", inplace=True)
     # begin to infer
     print(f'[Start infer `{config.model_name}`]')
     print("=" * 80)
