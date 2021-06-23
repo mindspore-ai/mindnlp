@@ -6,7 +6,6 @@ MindText is an open source text toolbox based on MindSpore.
 
 The master branch works with **MindSPore 1.2**.
 
-
 ## License
 
 This project is released under the [Apache 2.0 license](LICENSE).
@@ -23,7 +22,9 @@ community by providing a flexible as well as standardized toolkit to reimplement
 and develop their own new semantic segmentation methods.
 
 # Contributor
-Phantom(947291834@qq.com)<br/>Minjie Hu(1249213249@qq.com)</br>
+
+Phantom(947291834@qq.com)
+Minjie Hu(1249213249@qq.com)
 xiaoyisd(524925587@qq.com)
 Norato(834184466@qq.com)
 LiHuamao123(LiHuamao123@foxmail.com)
@@ -49,8 +50,8 @@ xiaoyuzhau(1042958277@qq.com)
 lijianming(lijianming666666@163.com)
 ChenXuechen(312117408@qq.com)
 jmsyyds(1535276562@qq.com)
-xiaoyuzhau(1042958277@qq.com) 
-ChenXuechen(312117408@qq.com) 
+xiaoyuzhau(1042958277@qq.com)
+ChenXuechen(312117408@qq.com)
 Hamilton北（1209233513@qq.com）
 huanghonghao(373658829@qq.com)
 linkaizhe(499780002@qq.com)
@@ -85,10 +86,8 @@ JiaY Huang(625723003@qq.com)
 WuJianhui(1091538455@qq.com)
 FengLingCong(flclizhi@163.com)
 Qinzhenghan(1079913845@qq.com)
-
 liangyuting(1909558284@qq.com)
 Tujiachen(1762957373@qq.com)
-
 likeshu(1094462380@qq.com)
 zhuangzhihao(1559452919@qq.com)
 LiangHongYuan(1633667497@qq.com)
@@ -122,10 +121,7 @@ WanghChensu(634852549@qq.com)
 Zhouzijie(13458195923@163.com)
 SaigyoujiShizuka(saigyoujishizuka@gmail.com)
 Changxiaowei（421870499@qq.com)
-
 Xiejunhong (j1487052830@163.com)
-
-
 
 ## Citation
 
