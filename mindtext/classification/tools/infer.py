@@ -15,7 +15,6 @@
 """
 MindText Classification infer script.
 """
-import sys
 import os
 import spacy
 import pandas as pd
@@ -27,8 +26,6 @@ from mindspore.train.serialization import load_checkpoint, load_param_into_net
 from mindtext.classification.utils import get_config, parse_args
 from mindtext.classification.models import build_model, FastTextInferCell
 from mindtext.classification.dataset import FastTextDataPreProcess
-
-sys.path.append("../../../")
 
 
 def main(pargs):

@@ -15,9 +15,6 @@
 """
 MindText Classification eval script.
 """
-import sys
-
-sys.path.append("../../../")
 from sklearn.metrics import classification_report
 from mindspore import context
 

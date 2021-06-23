@@ -15,9 +15,6 @@
 """
 MindText Classification train script.
 """
-import sys
-
-sys.path.append("../../../")
 import time
 from mindspore import context
 from mindspore.common import set_seed
@@ -117,11 +114,6 @@ def main(pargs):
                 train_dataset=dataset_train,
                 callbacks=callbacks)
     print(f'[End of training `{config.model_name}`]')
-
-    '''
-    distribute train ....
-    pass
-    '''
 
 
 if __name__ == "__main__":

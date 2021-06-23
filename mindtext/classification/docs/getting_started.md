@@ -44,6 +44,12 @@ git clone https://gitee.com/mindspore/mindtext.git
 cd mindtext
 ```
 
+安装
+
+```shell
+python setup.py install
+```
+
 所需环境：
 
 ```bash
