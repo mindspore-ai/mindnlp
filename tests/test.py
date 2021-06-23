@@ -41,4 +41,8 @@ def test2():
     result = num1 * num2
     result = result - num2
     result = result * num1
+    result = result / num2
+    result = result * num2
+    result = result - num2
+    result = result * num1
     assert math.isclose(result, 6, abs_tol=0.001)

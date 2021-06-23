@@ -87,13 +87,18 @@ python -m spacy download en_core_web_lg==2.3.1
 
 进入`./config/fasttext`目录，打开`fasttext.yaml`文件
 
-`fasttext.yaml`文件中有多个参数配置如下：
+`fasttext.yaml`文件中有多个参数配置, 案例如下：
 
 ```text
 # Builtin Configurations
 
 model_name: "fasttext"      # 模型名称
 device_target: "GPU"        # 设备，可选GPU, ASCEND
+
+PREPROCESS:                                     # 数据预处理参数
+  max_len: 467                                  # 数据集最长文本长度
+  mid_dir_path: "./ag_temp_data"                # mindrecord生成路径
+  vocab_file_path: "your_path/vocab.txt"        # 生成/读取词表路径
 
 MODEL_PARAMETERS:           # 模型参数
   vocab_size: 1383812       # 词表大小
@@ -102,49 +107,43 @@ MODEL_PARAMETERS:           # 模型参数
 
 OPTIMIZER:                  # 优化器参数
   function: "Adam"          # 优化器类型，以Adam优化器为例
-  params:
-    lr: 0.20                # 学习率
-    min_lr: 0.000001        # 最小学习率
-    decay_steps: 115        # 学习率衰减补偿
-    warmup_steps: 400000                # warm_up步长
-    poly_lr_scheduler_power: 0.001        # 学习率策略
+  lr: 0.20                  # 学习率
+  min_lr: 0.000001          # 最小学习率
+  decay_steps: 236          # 学习率衰减补偿
+  warmup_steps: 400000                # warm_up步长
+  poly_lr_scheduler_power: 0.001      # 学习率策略
 
 TRAIN:                                      # 训练参数
-  params:
-    data_path: "/root/fasttext/ag_news_csv/train.csv"   # 训练集路径
-    mid_data_path: ""                       # 训练集预处理中间数据路径，如不指定，默认脚本当前路径
-    batch_size: 512                         # batch_size
-    buckets: [64, 128, 467]                 # 训练集数据加载块大小
-    epoch: 5                                # 训练epoch数
-    epoch_count: 1
-    loss_function: "SoftmaxCrossEntropyWithLogits"  # 损失函数类型
-    pretrain_ckpt_dir: ""                   # 断点训练检查点
-    save_ckpt_steps: 116                    # 检查点保存步长
-    save_ckpt_dir: "./"                     # 检查点保存路径
-    keep_ckpt_max: 10                       # 最大检查点数
-    run_distribute: False                   # 分布式训练，默认False
-    distribute_batch_size_gpu: 64           # 分布式训练单卡batch_size
+  data_path: "your_path/train.csv"          # 训练集路径
+  batch_size: 512                           # batch_size
+  buckets: [64, 128, 467]                   # 训练集数据加载块大小
+  epoch: 5                                  # 训练epoch数
+  epoch_count: 1
+  loss_function: "SoftmaxCrossEntropyWithLogits"    # 损失函数类型
+  pretrain_ckpt_dir: ""                             # 断点训练检查点
+  save_ckpt_steps: 116                              # 检查点保存步长
+  save_ckpt_dir: "your_path"                        # 检查点保存路径
+  keep_ckpt_max: 10                                 # 最大检查点数
+  run_distribute: False                             # 分布式训练，默认False
+  distribute_batch_size_gpu: 64                     # 分布式训练单卡batch_size
 
 VALID:                                          # 测试参数
-  params:
-    data_path: "/roor/fasttext/ag_news_csv/test.csv"    # 测试集路径
-    mid_data_path: ""                           # 测试集预处理中间数据路径，如不指定，默认脚本当前路径
-    batch_size: 512                             # batch_size
-    model_ckpt: ""                              # 模型检查点
-    test_buckets: [467]     # 测试集数据加载块大小
+  data_path: "your_path/test.csv"               # 测试集路径
+  batch_size: 512                               # batch_size
+  model_ckpt: "your_path/fasttext-*_***.ckpt"   # 模型检查点
+  test_buckets: [467]                           # 测试集数据加载块大小
 
-INFER:                          # 推断参数
-  params:
-    data_path: ""               # 推断数据路径
-    mid_data_path: ""           # 训练集预处理中间数据路径，如不指定，默认脚本当前路径
-    batch_size: 2048            # batch_size
-    model_ckpt: ""              # 模型检查点
+INFER:                                          # 推断参数
+  data_path: "your_path/test.csv"               # 推断数据路径
+  batch_size: 2048                              # batch_size
+  model_ckpt: "your_path/fasttext-*_***.ckpt"   # 模型检查点
+  buckets: [467]                                # 推断数据加载块大小
 
-EXPORT:                         # 模型导出参数
-  device_id: 0                  # 设备id
-  ckpt_file: ""                 # 检查点路径
-  file_name: "fasttexts"        # 文件名称
-  file_format: "AIR"            # 文件类型，可选AIR, ONNX, MINDIR
+EXPORT:                                         # 模型导出参数
+  device_id: 0                                  # 设备id
+  ckpt_file: "your_path/fasttext-*_***.ckpt"    # 检查点路径
+  file_name: "fasttexts"                        # 文件名称
+  file_format: "AIR"                            # 文件类型，可选AIR, ONNX, MINDIR
 ```
 
 ## 模型训练

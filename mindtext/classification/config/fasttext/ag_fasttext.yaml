@@ -22,7 +22,7 @@ OPTIMIZER:
   poly_lr_scheduler_power: 0.001
 
 TRAIN:
-  data_path: "/root/fasttext/ag_news_csv/train.csv"
+  data_path: "xxx/train.csv"
   batch_size: 512
   buckets: [64, 128, 467]
   epochs: 5
@@ -36,19 +36,19 @@ TRAIN:
   distribute_batch_size_gpu: 64
 
 VALID:
-  data_path: "/root/fasttext/ag_news_csv/test.csv"
+  data_path: "xxx/test.csv"
   batch_size: 512
-  model_ckpt: "/root/HongYeTest/mindtext/mindtext/classification/tools/ckpt_ag/fasttext-5_236.ckpt"
+  model_ckpt: "./ckpt_ag/fasttext-*_***.ckpt"
   buckets: [467]
 
 INFER:
-  data_path: "/root/fasttext/ag_news_csv/test.csv"
+  data_path: "xxx/test.csv"
   batch_size: 512
-  model_ckpt: ""
+  model_ckpt: "./ckpt_ag/fasttext-*_***.ckpt"
   buckets: [467]
 
 EXPORT:
   device_id: 0
-  ckpt_file: "/root/HongYeTest/mindtext/mindtext/classification/tools/ckpt_ag/fasttext-5_236.ckpt"
+  ckpt_file: "./ckpt_ag/fasttext-*_***.ckpt"
   file_name: "fasttext"
   file_format: "AIR"
