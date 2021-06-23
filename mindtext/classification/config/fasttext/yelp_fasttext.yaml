@@ -5,7 +5,8 @@ device_target: "GPU"
 
 PREPROCESS:
   max_len: 2955
-  mid_dir_path: "./temp_data"
+  mid_dir_path: "./yelp_temp_data"
+  vocab_file_path: "./ckpt_yelp/vocab.txt"
 
 MODEL_PARAMETERS:
   vocab_size: 6414979

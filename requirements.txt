@@ -1,3 +1,7 @@
+pandas==1.2.4
 spacy==2.3.1
-sklearn
-en_core_web_lg==2.3.1
+numpy==1.20.3
+mindspore==1.2.0
+tqdm==4.61.1
+PyYAML==5.4.1
+scikit_learn==0.24.1

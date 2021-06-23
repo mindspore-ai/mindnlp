@@ -5,7 +5,8 @@ device_target: "GPU"
 
 PREPROCESS:
   max_len: 467
-  mid_dir_path: "./temp_data"
+  mid_dir_path: "./ag_temp_data"
+  vocab_file_path: "./ckpt_ag/vocab.txt"
 
 MODEL_PARAMETERS:
   vocab_size: 1383812
@@ -29,7 +30,7 @@ TRAIN:
   loss_function: "SoftmaxCrossEntropyWithLogits"
   pretrain_ckpt_dir: ""
   save_ckpt_steps: 116
-  save_ckpt_dir: "./ckpt"
+  save_ckpt_dir: "./ckpt_ag"
   keep_ckpt_max: 10
   run_distribute: False
   distribute_batch_size_gpu: 64
@@ -37,7 +38,7 @@ TRAIN:
 VALID:
   data_path: "/root/fasttext/ag_news_csv/test.csv"
   batch_size: 512
-  model_ckpt: "/root/HongYeTest/mindtext/mindtext/classification/tools/ckpt/fasttext-5_236.ckpt"
+  model_ckpt: "/root/HongYeTest/mindtext/mindtext/classification/tools/ckpt_ag/fasttext-5_236.ckpt"
   buckets: [467]
 
 INFER:
@@ -48,6 +49,6 @@ INFER:
 
 EXPORT:
   device_id: 0
-  ckpt_file: "/root/HongYeTest/mindtext/mindtext/classification/tools/ckpt/fasttext-5_236.ckpt"
+  ckpt_file: "/root/HongYeTest/mindtext/mindtext/classification/tools/ckpt_ag/fasttext-5_236.ckpt"
   file_name: "fasttext"
   file_format: "AIR"

@@ -17,15 +17,15 @@ mindtext/classification/
 ├── docs
 │   └── getting_started.py # 用户使用指南
 ├── model
-│   ├── backbones         
+│   ├── backbones
 │   |    └── fasttext.py  # 模型的骨干架构
-|   ├── classifiers    
+|   ├── classifiers
 │   |    └── base.py      # 模型分类器
 |   ├── build_model.py    # 创建模型
 │   ├── loss.py           # 创建loss
 │   └── optimizer.py      # 创建优化器
 ├── test    # 测试模型  
-├── tools    
+├── tools
 │   ├── eval.py     # 评估模型
 │   ├── export.py   # 导出模型的checkpoint文件
 │   ├── infer.py    # 模型推理
@@ -47,13 +47,17 @@ cd mindtext
 所需环境：
 
 ```bash
-pip install sklearn
+pip install pandas==1.2.4
+pip install numpy==1.20.3
+pip install mindspore==1.2.0
+pip install tqdm==4.61.1
+pip install PyYAML==5.4.1
+pip install scikit_learn==0.24.1
 pip install spacy==2.3.1
 python -m spacy download en_core_web_lg==2.3.1
 ```
 
 ## 数据准备
-
 
 下载并解压数据集.
 
@@ -91,7 +95,7 @@ MODEL_PARAMETERS:           # 模型参数
   num_class: 4              # 类别数
 
 OPTIMIZER:                  # 优化器参数
-  function: "Adam"          # 优化器类型，以Adam优化器为例   
+  function: "Adam"          # 优化器类型，以Adam优化器为例
   params:
     lr: 0.20                # 学习率
     min_lr: 0.000001        # 最小学习率
@@ -106,7 +110,7 @@ TRAIN:                                      # 训练参数
     batch_size: 512                         # batch_size
     buckets: [64, 128, 467]                 # 训练集数据加载块大小
     epoch: 5                                # 训练epoch数
-    epoch_count: 1                         
+    epoch_count: 1
     loss_function: "SoftmaxCrossEntropyWithLogits"  # 损失函数类型
     pretrain_ckpt_dir: ""                   # 断点训练检查点
     save_ckpt_steps: 116                    # 检查点保存步长
@@ -138,6 +142,7 @@ EXPORT:                         # 模型导出参数
 ```
 
 ## 模型训练
+
 进入`mindtext/classification/tools`目录。
 
 ```bash
@@ -151,6 +156,7 @@ python train.py -c ../configs/fasttext/fasttext.yaml
 ```
 
 ## 模型评估
+
 进入`mindtext/classification/tools`目录。
 
 执行下面的命令开始模型评估：
@@ -160,6 +166,7 @@ python eval.py -c ../configs/fasttext/fasttext.yaml
 ```
 
 ## 模型导出
+
 进入`mindtext/classification/tools`目录。
 
 执行下面的命令开始模型导出：
@@ -169,6 +176,7 @@ python export.py -c ../configs/fasttext/fasttext.yaml
 ```
 
 ## 模型预测
+
 进入`mindtext/classification/tools`目录。
 
 执行下面的命令开始模型预测：

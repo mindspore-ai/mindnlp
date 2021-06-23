@@ -5,7 +5,8 @@ device_target: "GPU"
 
 PREPROCESS:
   max_len: 3013
-  mid_dir_path: "./temp_data"
+  mid_dir_path: "./dbpedia_temp_data"
+  vocab_file_path: "./ckpt_dbpedia/vocab.txt"
 
 MODEL_PARAMETERS:
   vocab_size: 6596536

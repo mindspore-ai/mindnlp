@@ -6,6 +6,7 @@ device_target: "GPU"
 PREPROCESS:
   max_len: 467
   mid_dir_path: "./temp_data"
+  vocab_file_path: ""
 
 MODEL_PARAMETERS:
   vocab_size: 1383812

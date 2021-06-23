@@ -17,8 +17,6 @@ MindText Classification infer script.
 """
 import sys
 import os
-
-sys.path.append("../../../")
 import spacy
 import pandas as pd
 import numpy as np
@@ -29,6 +27,8 @@ from mindspore.train.serialization import load_checkpoint, load_param_into_net
 from mindtext.classification.utils import get_config, parse_args
 from mindtext.classification.models import build_model, FastTextInferCell
 from mindtext.classification.dataset import FastTextDataPreProcess
+
+sys.path.append("../../../")
 
 
 def main(pargs):
@@ -54,16 +54,16 @@ def main(pargs):
     spacy_nlp.add_pipe(spacy_nlp.create_pipe('sentencizer'))
 
     process = FastTextDataPreProcess(ngram=2)
-    process.read_vocab_txt(os.path.join(os.getcwd(), config.PREPROCESS.mid_dir_path, "vocab.txt"))
+    process.read_vocab_txt(os.path.join(os.getcwd(), config.PREPROCESS.vocab_file_path))
     data = pd.read_csv(config.INFER.data_path, names=["idx", "seq1", "seq2"])
     data.fillna("", inplace=True)
     # begin to infer
     print(f'[Start infer `{config.model_name}`]')
     print("=" * 80)
     for i in zip(data["seq1"], data["seq2"], data["idx"]):
-        input = process.input_preprocess(i[0], i[1], spacy_nlp, False)
-        output = model.predict(Tensor(np.expand_dims(np.array(input, dtype=np.int32), 0)),
-                               Tensor(np.expand_dims(np.array(len(input), dtype=np.int32), 0)))
+        input_sequence = process.input_preprocess(i[0], i[1], spacy_nlp, False)
+        output = model.predict(Tensor(np.expand_dims(np.array(input_sequence, dtype=np.int32), 0)),
+                               Tensor(np.expand_dims(np.array(len(input_sequence), dtype=np.int32), 0)))
         print(output)
     print(f'[End of infer `{config.model_name}`]')
 
