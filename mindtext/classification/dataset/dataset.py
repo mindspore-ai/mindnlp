@@ -17,7 +17,7 @@ Data preprocess
 """
 import os
 
-from mindtext.classification.dataset.FastTextDataPreProcess import FastTextDataPreProcess
+from mindtext.classification.dataset.DataPreProcess import DataPreProcess
 from .mindrecord import mindrecord_file_path
 from .load_data import load_dataset
 
@@ -50,16 +50,16 @@ def _data_preprocess(config, temp_dir, select_dataset):
 
     for i in select_dataset:
         if not os.path.exists(os.path.join(os.getcwd(), temp_dir, "{}_temp_data".format(i))):
-            data_preprocess_dict[i] = FastTextDataPreProcess(data_path=data_path_dict[i],
-                                                             max_length=config.PREPROCESS.max_len,
-                                                             ngram=2,
-                                                             class_num=config.MODEL_PARAMETERS.num_class,
-                                                             feature_dict=feature_dicts[i],
-                                                             buckets=config[
-                                                                 "INFER" if i == "test" else i.upper()].buckets,
-                                                             is_hashed=False,
-                                                             feature_size=10000000,
-                                                             is_train=i == "train")
+            data_preprocess_dict[i] = DataPreProcess(data_path=data_path_dict[i],
+                                                     max_length=config.PREPROCESS.max_len,
+                                                     ngram=2,
+                                                     class_num=config.MODEL_PARAMETERS.num_class,
+                                                     feature_dict=feature_dicts[i],
+                                                     buckets=config[
+                                                         "INFER" if i == "test" else i.upper()].buckets,
+                                                     is_hashed=False,
+                                                     feature_size=10000000,
+                                                     is_train=i == "train")
 
     for i in select_dataset:
         if data_preprocess_dict[i] is not None:

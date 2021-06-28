@@ -17,13 +17,14 @@ FastText data preprocess
 """
 import re
 import html
-import spacy
 import csv
+import spacy
 from sklearn.feature_extraction import FeatureHasher
+from mindtext.common.data import Pad
 
 
-class FastTextDataPreProcess():
-    """FastText data preprocess"""
+class DataPreProcess():
+    """Data preprocess"""
 
     def __init__(self, data_path=None,
                  max_length=None,
@@ -55,28 +56,28 @@ class FastTextDataPreProcess():
         self.str_html = re.compile(r'<[^>]+>')
         self.is_train = is_train
 
-    def common_block(self, _pair_sen, spacy_nlp):
+    def common_block(self, pair_sen, spacy_nlp):
         """common block for data preprocessing"""
-        label_idx = int(_pair_sen[0]) - 1
-        if len(_pair_sen) == 3:
-            src_tokens = self.input_preprocess(src_text1=_pair_sen[1],
-                                               src_text2=_pair_sen[2],
+        label_idx = int(pair_sen[0]) - 1
+        if len(pair_sen) == 3:
+            src_tokens = self.input_preprocess(src_text1=pair_sen[1],
+                                               src_text2=pair_sen[2],
                                                spacy_nlp=spacy_nlp,
                                                train_mode=True)
             src_tokens_length = len(src_tokens)
-        elif len(_pair_sen) == 2:
-            src_tokens = self.input_preprocess(src_text1=_pair_sen[1],
+        elif len(pair_sen) == 2:
+            src_tokens = self.input_preprocess(src_text1=pair_sen[1],
                                                src_text2=None,
                                                spacy_nlp=spacy_nlp,
                                                train_mode=True)
             src_tokens_length = len(src_tokens)
-        elif len(_pair_sen) == 4:
-            if _pair_sen[2]:
-                sen_o_t = _pair_sen[1] + ' ' + _pair_sen[2]
+        elif len(pair_sen) == 4:
+            if pair_sen[2]:
+                sen_o_t = pair_sen[1] + ' ' + pair_sen[2]
             else:
-                sen_o_t = _pair_sen[1]
+                sen_o_t = pair_sen[1]
             src_tokens = self.input_preprocess(src_text1=sen_o_t,
-                                               src_text2=_pair_sen[3],
+                                               src_text2=pair_sen[3],
                                                spacy_nlp=spacy_nlp,
                                                train_mode=True)
             src_tokens_length = len(src_tokens)
@@ -91,34 +92,34 @@ class FastTextDataPreProcess():
         if self.is_train:
             with open(self.data_path, 'r', newline='', encoding='utf-8') as data_file:
                 reader = csv.reader(data_file, delimiter=",", quotechar='"')
-                for _, _pair_sen in enumerate(reader):
-                    src_tokens, src_tokens_length, label_idx = self.common_block(_pair_sen=_pair_sen,
+                for _, pair_sen in enumerate(reader):
+                    src_tokens, src_tokens_length, label_idx = self.common_block(pair_sen=pair_sen,
                                                                                  spacy_nlp=spacy_nlp)
                     dataset_list.append([src_tokens, src_tokens_length, label_idx])
         else:
             with open(self.data_path, 'r', newline='', encoding='utf-8') as data_file:
                 reader2 = csv.reader(data_file, delimiter=",", quotechar='"')
-                for _, _test_sen in enumerate(reader2):
-                    label_idx = int(_test_sen[0]) - 1
-                    if len(_test_sen) == 3:
-                        src_tokens = self.input_preprocess(src_text1=_test_sen[1],
-                                                           src_text2=_test_sen[2],
+                for _, test_sen in enumerate(reader2):
+                    label_idx = int(test_sen[0]) - 1
+                    if len(test_sen) == 3:
+                        src_tokens = self.input_preprocess(src_text1=test_sen[1],
+                                                           src_text2=test_sen[2],
                                                            spacy_nlp=spacy_nlp,
                                                            train_mode=False)
                         src_tokens_length = len(src_tokens)
-                    elif len(_test_sen) == 2:
-                        src_tokens = self.input_preprocess(src_text1=_test_sen[1],
+                    elif len(test_sen) == 2:
+                        src_tokens = self.input_preprocess(src_text1=test_sen[1],
                                                            src_text2=None,
                                                            spacy_nlp=spacy_nlp,
                                                            train_mode=False)
                         src_tokens_length = len(src_tokens)
-                    elif len(_test_sen) == 4:
-                        if _test_sen[2]:
-                            sen_o_t = _test_sen[1] + ' ' + _test_sen[2]
+                    elif len(test_sen) == 4:
+                        if test_sen[2]:
+                            sen_o_t = test_sen[1] + ' ' + test_sen[2]
                         else:
-                            sen_o_t = _test_sen[1]
+                            sen_o_t = test_sen[1]
                         src_tokens = self.input_preprocess(src_text1=sen_o_t,
-                                                           src_text2=_test_sen[3],
+                                                           src_text2=test_sen[3],
                                                            spacy_nlp=spacy_nlp,
                                                            train_mode=False)
                         src_tokens_length = len(src_tokens)
@@ -135,11 +136,10 @@ class FastTextDataPreProcess():
 
         # pad dataset
         dataset_list_length = len(dataset_list)
-        for l in range(dataset_list_length):
-            bucket_length = self._get_bucket_length(dataset_list[l][0], self.buckets)
-            while len(dataset_list[l][0]) < bucket_length:
-                dataset_list[l][0].append(self.word2vec['PAD'])
-            dataset_list[l][1] = len(dataset_list[l][0])
+        for i in range(dataset_list_length):
+            bucket_length = self._get_bucket_length(dataset_list[i][0], self.buckets)
+            dataset_list[i][0] = Pad(bucket_length)(dataset_list[i][0])
+            dataset_list[i][1] = len(dataset_list[i][0])
 
         example_data = []
         for idx in range(dataset_list_length):
