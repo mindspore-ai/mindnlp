@@ -4,7 +4,7 @@
 
 MindText is an open source text toolbox based on MindSpore.
 
-The master branch works with **MindSPore 1.2**.
+The master branch works with **MindSpore 1.2**.
 
 ## License
 
