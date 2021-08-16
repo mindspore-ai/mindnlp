@@ -19,10 +19,11 @@ import mindspore.nn as nn
 
 
 def create_loss(config):
+    """
+    create loss
+    """
     if config.TRAIN.loss_function == "SoftmaxCrossEntropyWithLogits":
         loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction="mean")
-        return loss
     elif config.TRAIN.loss_function == "BCEWithLogitsLoss":
         loss = nn.BCEWithLogitsLoss()
-        return loss
-    return None
+    return loss

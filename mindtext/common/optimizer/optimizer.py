@@ -24,6 +24,9 @@ from mindtext.classification.utils.lr_schedule import polynomial_decay_scheduler
 
 
 def create_optimizer(param, config):
+    """
+    create optimizer
+    """
     config_optimizer = config.OPTIMIZER
     if config_optimizer.function == "Adam":
         if "poly_lr_scheduler_power" in config_optimizer.keys():
@@ -34,6 +37,9 @@ def create_optimizer(param, config):
 
 
 def custom_optimizer(param, config):
+    """
+    custom optimizer
+    """
     config_optimizer = config.OPTIMIZER
     update_steps = config.TRAIN.epochs * config.OPTIMIZER.decay_steps
     rank_size = os.getenv("RANK_SIZE")
