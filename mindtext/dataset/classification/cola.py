@@ -13,3 +13,31 @@
 # limitations under the License.
 # ============================================================================
 """cola class"""
+import pandas as pd
+
+
+class Cola:
+    """ Usage of Dataset CoLA """
+
+    def __init__(self):
+        """"""
+
+    def load(self, path):
+        """input path and return raw DataSet samples """
+        with open(path, "r", encoding='utf-8') as reader:
+            data = pd.read_csv(reader, sep='\t', header=None)
+        data.columns = ['source', 'judgeLabel', 'originalLabel', 'sentence']
+        dataframe = pd.DataFrame(data)
+        dataframe.fillna('', inplace=True)
+        print(dataframe, '\n')
+        return dataframe
+
+    def process(self):
+        """dataset process"""
+        return None
+
+
+if __name__ == "__main__":
+    test = Cola()
+    df = test.load('train.tsv')
+    print(df.values[:, :])

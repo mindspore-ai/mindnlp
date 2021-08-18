@@ -12,19 +12,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-"""conll2003 class"""
+"""Sogou News class"""
 import pandas as pd
 
 
-class Conll2003:
-    """ Usage of Dataset conll2003"""
+class SogouNews:
+    """ Usage of Dataset SogouNews """
+
     def __init__(self):
         """"""
 
     def load(self, path):
         """input path and return raw DataSet samples """
         with open(path, "r", encoding='utf-8') as reader:
-            data = pd.read_table(reader, sep=' ')
+            data = pd.read_csv(reader, sep=',', header=None)
+        data.columns = ['label', 'title', 'content']
         print(data, '\n')
         return data
 
@@ -34,6 +36,6 @@ class Conll2003:
 
 
 if __name__ == "__main__":
-    test = Conll2003()
-    df = test.load('train.txt')
+    test = SogouNews()
+    df = test.load('sogou_news_csv/train.csv')
     print(df.values[:, :])

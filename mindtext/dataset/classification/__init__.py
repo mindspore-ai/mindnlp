@@ -12,28 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-"""conll2003 class"""
-import pandas as pd
-
-
-class Conll2003:
-    """ Usage of Dataset conll2003"""
-    def __init__(self):
-        """"""
-
-    def load(self, path):
-        """input path and return raw DataSet samples """
-        with open(path, "r", encoding='utf-8') as reader:
-            data = pd.read_table(reader, sep=' ')
-        print(data, '\n')
-        return data
-
-    def process(self):
-        """dataset process"""
-        return None
-
-
-if __name__ == "__main__":
-    test = Conll2003()
-    df = test.load('train.txt')
-    print(df.values[:, :])
+"""
+classification init
+"""
