@@ -16,3 +16,4 @@
 Data process
 """
 from .collate import *
+from .vocabulary import Vocabulary

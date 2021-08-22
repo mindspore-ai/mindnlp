@@ -13,43 +13,42 @@
 # limitations under the License.
 # ============================================================================
 """
-    CoLA dataset
+    STS-B dataset
 """
 from typing import Union, Dict, List
+import csv
 
 import pandas as pd
 from pandas import DataFrame
 
-import mindspore.dataset as ds
-
-from ..base_dataset import CLSBaseDataset
+from ..base_dataset import PairCLSBaseDataset
 
 
-class CoLADataset(CLSBaseDataset):
+class STSBDataset(PairCLSBaseDataset):
     """
-    CoLA dataset load.
+    STS-B dataset.
 
     Args:
         paths (Union[str, Dict[str, str]], Optional): Dataset file path or Dataset directory path, default None.
-        tokenizer (Union[str]): Tokenizer function,default 'spacy'.
-        lang (str): Tokenizer language,default 'en'.
+        tokenizer (Union[str]): Tokenizer function, default 'spacy'.
+        lang (str): Tokenizer language, default 'en'.
         max_size (int, Optional): Vocab max size, default None.
         min_freq (int, Optional): Min word frequency, default None.
-        padding (str): Padding token,default `<pad>`.
-        unknown (str): Unknown token,default `<unk>`.
+        padding (str): Padding token, default `<pad>`.
+        unknown (str): Unknown token, default `<unk>`.
         buckets (List[int], Optional): Padding row to the length of buckets, default None.
 
     Examples:
-        >>> cola = CoLADataset(tokenizer='spacy', lang='en')
-        # cola = CoLADataset(tokenizer='spacy', lang='en', buckets=[16,32,64])
-        >>> ds = cola()
+        >>> sts = STSBDataset(tokenizer='spacy', lang='en')
+        # stsb = STSBDataset(tokenizer='spacy', lang='en', buckets=[16,32,64])
+        >>> ds = sts()
     """
 
     def __init__(self, paths: Union[str, Dict[str, str]] = None,
                  tokenizer: Union[str] = 'spacy', lang: str = 'en', max_size: int = None, min_freq: int = None,
                  padding: str = '<pad>', unknown: str = '<unk>',
                  buckets: List[int] = None):
-        super(CoLADataset, self).__init__(sep='\t', name='CoLA')
+        super(STSBDataset, self).__init__(sep='\t', name='STS-B', label_is_float=True)
         self._paths = paths
         self._tokenize = tokenizer
         self._lang = lang
@@ -59,7 +58,7 @@ class CoLADataset(CLSBaseDataset):
         self._unknown = unknown
         self._buckets = buckets
 
-    def __call__(self) -> Dict[str, ds.MindDataset]:
+    def __call__(self):
         self.load(self._paths)
         self.process(tokenizer=self._tokenize, lang=self._lang, max_size=self._vocab_max_size,
                      min_freq=self._vocab_min_freq, padding=self._padding,
@@ -67,23 +66,14 @@ class CoLADataset(CLSBaseDataset):
         return self.mind_datasets
 
     def _load(self, path: str) -> DataFrame:
-        """
-        Load dataset from CoLA file.
-
-        Args:
-            path (str): Dataset file path.
-
-        Returns:
-            DataFrame: Dataset file will be read as a DataFrame.
-        """
         with open(path, 'r', encoding='utf-8') as f:
-            cls = len(f.readline().strip().split())
-        with open(path, 'r', encoding='utf-8') as f:
-            if cls == 2:
-                dataset = pd.read_csv(f, sep='\t', names=['index', 'sentence'])
+            columns = f.readline().strip().split('\t')
+            dataset = pd.read_csv(f, sep='\t', names=columns, quoting=csv.QUOTE_NONE)
+            if "score" in dataset.columns.values:
+                dataset = dataset[['index', 'sentence1', 'sentence2', 'score']]
+                dataset.columns = ['index', 'sentence1', 'sentence2', 'label']
             else:
-                dataset = pd.read_csv(f, sep='\t', names=['source', 'label', 'originalLabel', 'sentence'])
-                dataset = dataset[['sentence', 'label']]
-        dataset.fillna('')
-        dataset.dropna(inplace=True)
+                dataset = dataset[['index', 'sentence1', 'sentence2']]
+            dataset.fillna('')
+            dataset.dropna(inplace=True)
         return dataset

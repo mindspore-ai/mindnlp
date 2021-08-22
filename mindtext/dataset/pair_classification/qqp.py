@@ -13,43 +13,41 @@
 # limitations under the License.
 # ============================================================================
 """
-    CoLA dataset
+    RTE dataset
 """
 from typing import Union, Dict, List
 
 import pandas as pd
 from pandas import DataFrame
 
-import mindspore.dataset as ds
-
-from ..base_dataset import CLSBaseDataset
+from ..base_dataset import PairCLSBaseDataset
 
 
-class CoLADataset(CLSBaseDataset):
+class QQPDataset(PairCLSBaseDataset):
     """
-    CoLA dataset load.
+    QQP dataset.
 
     Args:
         paths (Union[str, Dict[str, str]], Optional): Dataset file path or Dataset directory path, default None.
-        tokenizer (Union[str]): Tokenizer function,default 'spacy'.
-        lang (str): Tokenizer language,default 'en'.
+        tokenizer (Union[str]): Tokenizer function, default 'spacy'.
+        lang (str): Tokenizer language, default 'en'.
         max_size (int, Optional): Vocab max size, default None.
         min_freq (int, Optional): Min word frequency, default None.
-        padding (str): Padding token,default `<pad>`.
-        unknown (str): Unknown token,default `<unk>`.
+        padding (str): Padding token, default `<pad>`.
+        unknown (str): Unknown token, default `<unk>`.
         buckets (List[int], Optional): Padding row to the length of buckets, default None.
 
     Examples:
-        >>> cola = CoLADataset(tokenizer='spacy', lang='en')
-        # cola = CoLADataset(tokenizer='spacy', lang='en', buckets=[16,32,64])
-        >>> ds = cola()
+        >>> qqp = QQPDataset(tokenizer='spacy', lang='en')
+        # qqp = QQPDataset(tokenizer='spacy', lang='en', buckets=[16,32,64])
+        >>> ds = qqp()
     """
 
     def __init__(self, paths: Union[str, Dict[str, str]] = None,
                  tokenizer: Union[str] = 'spacy', lang: str = 'en', max_size: int = None, min_freq: int = None,
                  padding: str = '<pad>', unknown: str = '<unk>',
                  buckets: List[int] = None):
-        super(CoLADataset, self).__init__(sep='\t', name='CoLA')
+        super(QQPDataset, self).__init__(sep='\t', name='QQP')
         self._paths = paths
         self._tokenize = tokenizer
         self._lang = lang
@@ -59,7 +57,7 @@ class CoLADataset(CLSBaseDataset):
         self._unknown = unknown
         self._buckets = buckets
 
-    def __call__(self) -> Dict[str, ds.MindDataset]:
+    def __call__(self):
         self.load(self._paths)
         self.process(tokenizer=self._tokenize, lang=self._lang, max_size=self._vocab_max_size,
                      min_freq=self._vocab_min_freq, padding=self._padding,
@@ -67,23 +65,15 @@ class CoLADataset(CLSBaseDataset):
         return self.mind_datasets
 
     def _load(self, path: str) -> DataFrame:
-        """
-        Load dataset from CoLA file.
-
-        Args:
-            path (str): Dataset file path.
-
-        Returns:
-            DataFrame: Dataset file will be read as a DataFrame.
-        """
         with open(path, 'r', encoding='utf-8') as f:
-            cls = len(f.readline().strip().split())
-        with open(path, 'r', encoding='utf-8') as f:
-            if cls == 2:
-                dataset = pd.read_csv(f, sep='\t', names=['index', 'sentence'])
+            columns = f.readline().strip().split('\t')
+            dataset = pd.read_csv(f, sep='\t', names=columns)
+            if "is_duplicate" in dataset.columns.values:
+                dataset = dataset[['question1', 'question2', 'is_duplicate']]
+                dataset.columns = ['sentence1', 'sentence2', 'label']
             else:
-                dataset = pd.read_csv(f, sep='\t', names=['source', 'label', 'originalLabel', 'sentence'])
-                dataset = dataset[['sentence', 'label']]
-        dataset.fillna('')
-        dataset.dropna(inplace=True)
+                dataset = dataset[['question1', 'question2']]
+                dataset.columns = ['sentence1', 'sentence2']
+            dataset.fillna('')
+            dataset.dropna(inplace=True)
         return dataset

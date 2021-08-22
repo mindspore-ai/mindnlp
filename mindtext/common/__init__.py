@@ -13,9 +13,6 @@
 # limitations under the License.
 # ============================================================================
 """
-    Dataset init
+Data process
 """
-from ..common import Vocabulary, Pad
-from .classification import SST2Dataset, CoLADataset
-from .pair_classification import RTEDataset, MNLIDataset, QQPDataset, MRPCDataset, QNLIDataset
-from .regression import STSBDataset
+from .data import Vocabulary, Pad
