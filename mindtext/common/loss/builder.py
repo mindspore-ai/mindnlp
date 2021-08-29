@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-"""builder of loss"""
+"""Builder of loss."""
 
 import inspect
 
@@ -27,7 +27,7 @@ def build_loss(cfg):
 
 
 def register_loss():
-    """register loss"""
+    """Register loss."""
     for module_name in dir(ms.nn):
         if module_name.startswith('__'):
             continue
