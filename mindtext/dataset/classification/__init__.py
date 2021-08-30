@@ -13,5 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """
-classification init
+    classification init
 """
+from .sst import SST2Dataset
+from .cola import CoLADataset

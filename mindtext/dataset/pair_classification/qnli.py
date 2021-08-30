@@ -13,43 +13,42 @@
 # limitations under the License.
 # ============================================================================
 """
-    CoLA dataset
+    MRPC dataset
 """
 from typing import Union, Dict, List
 
+from tqdm import tqdm
 import pandas as pd
 from pandas import DataFrame
 
-import mindspore.dataset as ds
-
-from ..base_dataset import CLSBaseDataset
+from ..base_dataset import PairCLSBaseDataset
 
 
-class CoLADataset(CLSBaseDataset):
+class QNLIDataset(PairCLSBaseDataset):
     """
-    CoLA dataset load.
+    QNLI dataset.
 
     Args:
         paths (Union[str, Dict[str, str]], Optional): Dataset file path or Dataset directory path, default None.
-        tokenizer (Union[str]): Tokenizer function,default 'spacy'.
-        lang (str): Tokenizer language,default 'en'.
+        tokenizer (Union[str]): Tokenizer function, default 'spacy'.
+        lang (str): Tokenizer language, default 'en'.
         max_size (int, Optional): Vocab max size, default None.
         min_freq (int, Optional): Min word frequency, default None.
-        padding (str): Padding token,default `<pad>`.
-        unknown (str): Unknown token,default `<unk>`.
+        padding (str): Padding token, default `<pad>`.
+        unknown (str): Unknown token, default `<unk>`.
         buckets (List[int], Optional): Padding row to the length of buckets, default None.
 
     Examples:
-        >>> cola = CoLADataset(tokenizer='spacy', lang='en')
-        # cola = CoLADataset(tokenizer='spacy', lang='en', buckets=[16,32,64])
-        >>> ds = cola()
+        >>> qnli = QNLIDataset(tokenizer='spacy', lang='en')
+        # qnli = QNLIDataset(tokenizer='spacy', lang='en', buckets=[16,32,64])
+        >>> ds = qnli()
     """
 
     def __init__(self, paths: Union[str, Dict[str, str]] = None,
                  tokenizer: Union[str] = 'spacy', lang: str = 'en', max_size: int = None, min_freq: int = None,
                  padding: str = '<pad>', unknown: str = '<unk>',
                  buckets: List[int] = None):
-        super(CoLADataset, self).__init__(sep='\t', name='CoLA')
+        super(QNLIDataset, self).__init__(sep='\t', name='QNLI', label_map={"not_entailment": 0, "entailment": 1})
         self._paths = paths
         self._tokenize = tokenizer
         self._lang = lang
@@ -59,7 +58,7 @@ class CoLADataset(CLSBaseDataset):
         self._unknown = unknown
         self._buckets = buckets
 
-    def __call__(self) -> Dict[str, ds.MindDataset]:
+    def __call__(self):
         self.load(self._paths)
         self.process(tokenizer=self._tokenize, lang=self._lang, max_size=self._vocab_max_size,
                      min_freq=self._vocab_min_freq, padding=self._padding,
@@ -67,23 +66,25 @@ class CoLADataset(CLSBaseDataset):
         return self.mind_datasets
 
     def _load(self, path: str) -> DataFrame:
-        """
-        Load dataset from CoLA file.
-
-        Args:
-            path (str): Dataset file path.
-
-        Returns:
-            DataFrame: Dataset file will be read as a DataFrame.
-        """
         with open(path, 'r', encoding='utf-8') as f:
-            cls = len(f.readline().strip().split())
-        with open(path, 'r', encoding='utf-8') as f:
-            if cls == 2:
-                dataset = pd.read_csv(f, sep='\t', names=['index', 'sentence'])
+            columns = f.readline().strip().split('\t')
+            dataset = pd.read_csv(f, sep='\n', names=columns)
+            tqdm.pandas(desc=f"{self._name} dataset loadding")
+            if "label" in dataset.columns.values:
+                dataset = dataset[['index', 'question', 'sentence', 'label']]
+                dataset.columns = ['index', 'sentence1', 'sentence2', 'label']
+                dataset[['index', 'sentence1', 'sentence2', 'label']] = dataset.progress_apply(_split_row, axis=1,
+                                                                                               result_type="expand")
             else:
-                dataset = pd.read_csv(f, sep='\t', names=['source', 'label', 'originalLabel', 'sentence'])
-                dataset = dataset[['sentence', 'label']]
-        dataset.fillna('')
-        dataset.dropna(inplace=True)
+                dataset = dataset[['index', 'question', 'sentence']]
+                dataset.columns = ['index', 'sentence1', 'sentence2']
+                dataset[['index', 'sentence1', 'sentence2']] = dataset.progress_apply(_split_row, axis=1,
+                                                                                      result_type="expand")
+            dataset.fillna('')
+            dataset.dropna(inplace=True)
         return dataset
+
+
+def _split_row(row):
+    row_data = row['index'].strip().split('\t')
+    return row_data

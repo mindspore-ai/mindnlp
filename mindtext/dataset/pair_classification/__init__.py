@@ -13,5 +13,10 @@
 # limitations under the License.
 # ============================================================================
 """
-pair_classification init
+    pair_classification init
 """
+from .rte import RTEDataset
+from .mnli import MNLIDataset
+from .qqp import QQPDataset
+from .mrpc import MRPCDataset
+from .qnli import QNLIDataset

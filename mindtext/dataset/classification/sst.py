@@ -13,43 +13,40 @@
 # limitations under the License.
 # ============================================================================
 """
-    CoLA dataset
+    SST-2 dataset
 """
 from typing import Union, Dict, List
-
-import pandas as pd
-from pandas import DataFrame
 
 import mindspore.dataset as ds
 
 from ..base_dataset import CLSBaseDataset
 
 
-class CoLADataset(CLSBaseDataset):
+class SST2Dataset(CLSBaseDataset):
     """
-    CoLA dataset load.
+    SST2 dataset.
 
     Args:
         paths (Union[str, Dict[str, str]], Optional): Dataset file path or Dataset directory path, default None.
-        tokenizer (Union[str]): Tokenizer function,default 'spacy'.
-        lang (str): Tokenizer language,default 'en'.
+        tokenizer (Union[str]): Tokenizer function, default 'spacy'.
+        lang (str): Tokenizer language, default 'en'.
         max_size (int, Optional): Vocab max size, default None.
         min_freq (int, Optional): Min word frequency, default None.
-        padding (str): Padding token,default `<pad>`.
-        unknown (str): Unknown token,default `<unk>`.
+        padding (str): Padding token, default `<pad>`.
+        unknown (str): Unknown token, default `<unk>`.
         buckets (List[int], Optional): Padding row to the length of buckets, default None.
 
     Examples:
-        >>> cola = CoLADataset(tokenizer='spacy', lang='en')
-        # cola = CoLADataset(tokenizer='spacy', lang='en', buckets=[16,32,64])
-        >>> ds = cola()
+        >>> sst2 = SST2Dataset(tokenizer='spacy', lang='en')
+        # sst2 = SST2Dataset(tokenizer='spacy', lang='en', buckets=[16,32,64])
+        >>> ds = sst2()
     """
 
     def __init__(self, paths: Union[str, Dict[str, str]] = None,
                  tokenizer: Union[str] = 'spacy', lang: str = 'en', max_size: int = None, min_freq: int = None,
                  padding: str = '<pad>', unknown: str = '<unk>',
                  buckets: List[int] = None):
-        super(CoLADataset, self).__init__(sep='\t', name='CoLA')
+        super(SST2Dataset, self).__init__(sep='\t', name='SST-2')
         self._paths = paths
         self._tokenize = tokenizer
         self._lang = lang
@@ -65,25 +62,3 @@ class CoLADataset(CLSBaseDataset):
                      min_freq=self._vocab_min_freq, padding=self._padding,
                      unknown=self._unknown, buckets=self._buckets)
         return self.mind_datasets
-
-    def _load(self, path: str) -> DataFrame:
-        """
-        Load dataset from CoLA file.
-
-        Args:
-            path (str): Dataset file path.
-
-        Returns:
-            DataFrame: Dataset file will be read as a DataFrame.
-        """
-        with open(path, 'r', encoding='utf-8') as f:
-            cls = len(f.readline().strip().split())
-        with open(path, 'r', encoding='utf-8') as f:
-            if cls == 2:
-                dataset = pd.read_csv(f, sep='\t', names=['index', 'sentence'])
-            else:
-                dataset = pd.read_csv(f, sep='\t', names=['source', 'label', 'originalLabel', 'sentence'])
-                dataset = dataset[['sentence', 'label']]
-        dataset.fillna('')
-        dataset.dropna(inplace=True)
-        return dataset

@@ -13,73 +13,160 @@
 # limitations under the License.
 # ============================================================================
 """vocabulary class"""
-import re
-import spacy
+from typing import List, Union, Dict
+from collections import Counter
+
+import pandas as pd
+from tqdm import tqdm
 
 
-class Vocabulary():
+class Vocabulary:
     """
-        vocabulary class
+    Convert word to index.
 
+    Args:
+        max_size (int, Optional): Vocab max size, default None.
+        min_freq (int, Optional): Min word frequency, default None.
+        padding (str): Padding token, default `<pad>`.
+        unknown (str): Unknown token, default `<unk>`.
+
+    Examples:
+        >>> vocab = Vocabulary()
+        >>> word_list = "this is a word list".split()
+        >>> vocab.update(word_list)
+        >>> vocab["word"] # tokens to int
+        >>> vocab.to_word(5) # int to tokens
+    """
+
+    def __init__(self, max_size: int = None, min_freq: int = None, padding: str = '<pad>', unknown: str = '<unk>'):
+        self.max_size = max_size
+        self.min_freq = min_freq
+        self.word_count = Counter()
+        self.unknown = unknown
+        self.padding = padding
+        self.padding_idx = None
+        self.unknown_idx = None
+        self._word2idx = None
+        self._idx2word = None
+
+    def add(self, word: str):
         """
+        Increase the frequency of a word.
 
-    def __init__(self, data_list=None,
-                 max_length=None,
-                 is_eng=True,
-                 is_train=True):
-        self.data_list = data_list
-        self.max_length = max_length
-        self.text_greater = '>'
-        self.text_less = '<'
-        self.word2idx = dict()
-        self.idx2words = dict()
-        self.non_str = '\\'
-        self.end_string = ['.', '?', '!']
-        self.word2idx['PAD'] = 0
-        self.idx2words[0] = 'PAD'
-        self.word2idx['UNK'] = 1
-        self.idx2words[1] = 'UNK'
-        self.str_html = re.compile(r'<[^>]+>')
-        self.is_eng = is_eng
-        self.is_train = is_train
+        Args:
+            word (str): A word.
+        """
+        self.word_count[word] += 1
 
-    def text2tokens(self, src_text, is_train=False):
-        """src text to token """
-        if self.is_eng:
-            spacy_nlp = spacy.load('load_core_web_lg', disable=['parser', 'tagger', 'ner'])
-            spacy_nlp.add_pipe(spacy_nlp.create_pipe('sentencizer'))
-            doc = spacy_nlp(src_text)
-            bows_token = [token.text for token in doc]
-            if is_train is True:
-                for ngms in bows_token:
-                    idx = self.word2idx.get(ngms)
-                    if idx is None:
-                        idx = len(self.word2idx)
-                        self.word2idx[ngms] = idx
-                        self.idx2words[idx] = ngms
-            processed_out = [self.word2idx[ng] if ng in self.word2idx else self.word2idx['UNK'] for ng in bows_token]
+    def update(self, word_list: List[str]):
+        """
+        Increase the frequency of multiple words.
 
-        return processed_out
+        Args:
+            word_list (List[str]): A word list.
+        """
+        self.word_count.update(word_list)
 
-    def update(self, data_list, is_train=True):
-        """update vocab"""
-        for item in data_list:
-            self.text2tokens(item, is_train=is_train)
+    def build_vocab(self):
+        """
+        Build a dictionary based on word frequency.
+        """
+        if not self._word2idx:
+            self._word2idx = {}
+            if self.padding != '':
+                self._word2idx[self.padding] = len(self._word2idx)
+            if (self.unknown != '') and (self.unknown != self.padding):
+                self._word2idx[self.unknown] = len(self._word2idx)
 
-    def vocab_to_txt(self, path):
-        """write vocab.txt"""
-        with open(path, "w") as f:
-            for k, v in self.word2idx.items():
-                f.write(k + "\t" + str(v) + "\n")
+        max_size = min(self.max_size, len(self.word_count)) if self.max_size else None
+        words = self.word_count.most_common(max_size)
+        if isinstance(self.min_freq, int):
+            words = filter(lambda kv: kv[1] >= self.min_freq, words)
+        if isinstance(self._word2idx, Dict):
+            words = filter(lambda kv: kv[0] not in self._word2idx, words)
+        start_idx = len(self._word2idx)
+        self._word2idx.update({w: i + start_idx for i, (w, _) in enumerate(tqdm(words))})
+        self._idx2word = {i: w for w, i in tqdm(self._word2idx.items())}
+        self.padding_idx = self[self.padding]
+        self.unknown_idx = self[self.unknown]
 
-    def read_vocab_txt(self, path):
-        """read vocab.txt"""
-        with open(path, "r") as f:
-            lines = f.readlines()
-            for i, word in enumerate(lines):
-                s = word.split("\t")
-                self.word2idx[s[0]] = i
+    def to_word(self, idx: int) -> str:
+        """
+        Given a number convert to the corresponding token.
 
+        Args:
+            idx (int): A index of token.
 
-if __name__ == "__main__":
-    vocab = Vocabulary()
+        Returns:
+            str: Token.
+        """
+        return self._idx2word[idx]
+
+    def __getitem__(self, word: str) -> int:
+        """
+        Return token index.
+
+        Args:
+            word (str): Token.
+
+        Returns:
+            int: A index of token.
+        """
+        idx = self._word2idx.get(word, self.unknown_idx)
+        if not idx and self.unknown_idx == '':
+            raise ValueError(f"word `{word}` not in vocabulary")
+        return idx
+
+    def word_to_idx(self, word: pd.Series) -> pd.Series:
+        """
+        Convert tokens to index.
+
+        Args:
+            word (Series): Series needed to convert to index.
+
+        Returns:
+            Series: Converted Series.
+        """
+        index = word.apply(lambda n: [self[i] for i in n])
+        return index
+
+    def idx_to_word(self, index: pd.Series) -> pd.Series:
+        """
+        Convert index to tokens.
+
+        Args:
+            index (Series): Series needed to convert to tokens.
+
+        Returns:
+            Series: Converted dataset.
+        """
+        word = index.apply(lambda n: [self.to_word(i) for i in n])
+        return word
+
+    @staticmethod
+    def from_dataset(dataset: pd.DataFrame, field_name: Union[str, List[str]], max_size: int = None,
+                     min_freq: int = None, padding: str = '<pad>', unknown: str = '<unk>'):
+        """
+        Build a Vocabulary from a dataset.
+
+        Args:
+            dataset (DataFrame): Dataset.
+            field_name (Union[str, List[str]]): Which field of dataset need to be built.
+            max_size (int, Optional): Vocabulary max size, default None.
+            min_freq (int, Optional): Min word frequency, default None.
+            padding (str): Padding token, default `<pad>`.
+            unknown (str): Unknown token, default `<unk>`.
+
+        Returns:
+            Vocabulary: Vocabulary built from a dataset.
+        """
+        vocab = Vocabulary(max_size=max_size, min_freq=min_freq, padding=padding, unknown=unknown)
+        field_name = [field_name] if isinstance(field_name, str) else field_name
+        if isinstance(field_name, (str, List)):
+            vocab_bar = tqdm(dataset[field_name].iterrows(), total=len(dataset))
+            for _, row in vocab_bar:
+                for sent in field_name:
+                    vocab.update(row[sent])
+                vocab_bar.set_description("Build Vocabulary")
+            vocab.build_vocab()
+        return vocab
