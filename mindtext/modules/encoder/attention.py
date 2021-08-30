@@ -173,7 +173,8 @@ class MultiHeadAttention(nn.Cell):
         query_act (str): Activation function for the query transform. Default: None.
         key_act (str): Activation function for the key transform. Default: None.
         value_act (str): Activation function for the value transform. Default: None.
-        has_attn_mask (bool): Specifies whether to use attention mask. Default: False.
+        has_attn_mask (bool): Specifies whether to use attention mask. Default: True.
+        has_key_padding_mask (bool): Specifies whether to use key padding mask. Default: False.
         attn_dropout_prob (float): The dropout probability for
                                       MultiHeadAttention. Default: 0.0.
         use_one_hot_embeddings (bool): Specifies whether to use one hot encoding form. Default: False.
@@ -344,6 +345,7 @@ class SelfAttention(nn.Cell):
         use_one_hot_embeddings (bool): Specifies whether to use one_hot encoding form. Default: False.
         hidden_dropout_prob (float): The dropout probability for hidden outputs. Default: 0.1.
         has_attn_mask (bool): Specifies whether has attention mask. Default: True.
+        has_key_padding_mask (bool): Specifies whether to use key padding mask. Default: False.
         is_encdec_attn (bool): Specifies whether query sequence and memory sequence are different. Default: False.
         compute_type (:class:`mindspore.dtype`): Compute type in MultiheadAttention. Default: mstype.float32.
     """
