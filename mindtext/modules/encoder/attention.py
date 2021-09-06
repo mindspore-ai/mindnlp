@@ -339,7 +339,7 @@ class SelfAttention(nn.Cell):
     Args:
         batch_size (int): Batch size of input dataset.
         hidden_size (int): Size of attention layers.
-        num_heads (int): Number of attention heads. Default: 1.
+        num_heads (int): Number of attention heads. Default: 16.
         attn_dropout_prob (float): The dropout probability for
                                       SelfAttention. Default: 0.1.
         use_one_hot_embeddings (bool): Specifies whether to use one_hot encoding form. Default: False.
@@ -353,7 +353,7 @@ class SelfAttention(nn.Cell):
     def __init__(self,
                  batch_size: int,
                  hidden_size: int,
-                 num_heads: int = 1,
+                 num_heads: int = 16,
                  attn_dropout_prob: float = 0.1,
                  use_one_hot_embeddings: bool = False,
                  hidden_dropout_prob: float = 0.1,
