@@ -12,8 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-"""negative log likelihood loss between logits and labels"""
+"""Negative log likelihood loss between logits and labels."""
 
+from typing import Tuple
+from mindspore.common.tensor import Tensor
 import mindspore.ops as ops
 from mindspore.nn.loss.loss import _Loss
 
@@ -37,16 +39,28 @@ class NegativeLogLikelihood(_Loss):
     Outputs:
         Tuple of 2 tensors composed with loss and total_weight.
             loss (Tensor) - when reduction is none and input is 2D tensor, the loss shape is (N,).
-            Otherwise, the loss is a scalar. The data type is same with input’s.
+                Otherwise, the loss is a scalar. The data type is same with input's.
             total_weight (Tensor) - the total_weight is a scalar. The data type is same with
-            weight's.
+                weight's.
     """
-    def __init__(self, weight, reduction='mean'):
-        super(NegativeLogLikelihood, self).__init__()
+    def __init__(self, weight: Tensor, reduction: str = 'mean') -> _Loss:
+        super(NegativeLogLikelihood, self).__init__(reduction)
         self.weight = weight
         self.nll = ops.NLLLoss(reduction=reduction)
 
-    def construct(self, logits, labels):
-        """NegativeLogLikelihood construct"""
+    def construct(self, logits: Tensor, labels: Tensor) -> Tuple[Tensor, Tensor]:
+        """Construct the negative log likelihood loss between logits and labels.
+
+        Inputs:
+            - **logits** (Tensor) - The input Tensor. The data type must be float16 or float32.
+            - **labels** (Tensor) - The label Tensor which has same shape and data type as `logits`.
+
+        Outputs:
+            Tuple of 2 tensors composed with loss and total_weight.
+                loss (Tensor) - when reduction is none and input is 2D tensor, the loss shape
+                    is (N,). Otherwise, the loss is a scalar. The data type is same with input's.
+                total_weight (Tensor) - the total_weight is a scalar. The data type is same with
+                    weight's.
+        """
         loss, weight = self.nll(logits, labels, self.weight)
         return loss, weight

@@ -12,18 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-"""
- Produce the loss
-"""
-import mindspore.nn as nn
+"""loss"""
 
+from .builder import *
+from .cross_entropy import *
+from .negative_log_likelihood import *
+from .binary_cross_entropy import *
 
-def create_loss(config):
-    """
-    create loss
-    """
-    if config.TRAIN.loss_function == "SoftmaxCrossEntropyWithLogits":
-        loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction="mean")
-    elif config.TRAIN.loss_function == "BCEWithLogitsLoss":
-        loss = nn.BCEWithLogitsLoss()
-    return loss
+register_loss()
