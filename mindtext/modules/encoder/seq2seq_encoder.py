@@ -83,9 +83,9 @@ class EncoderCell(nn.Cell):
 
     Args:
         batch_size (int): Batch size of input dataset.
-        hidden_size (int): Size of the encoder layers. Default: 512.
-        num_heads (int): Number of attention heads. Default: 8.
-        intermediate_size (int): Size of intermediate layer. Default: 2048.
+        hidden_size (int): Size of the encoder layers. Default: 1024.
+        num_heads (int): Number of attention heads. Default: 16.
+        intermediate_size (int): Size of intermediate layer. Default: 4096.
         attn_dropout_prob (float): The dropout probability for self-attention. Default: 0.1.
         use_one_hot_embeddings (bool): Specifies whether to use one hot encoding form. Default: False.
         has_key_padding_mask (bool): Specifies whether to use key padding mask. Default: False.
@@ -95,9 +95,9 @@ class EncoderCell(nn.Cell):
     """
     def __init__(self,
                  batch_size: int,
-                 hidden_size: int = 512,
-                 num_heads: int = 8,
-                 intermediate_size: int = 2048,
+                 hidden_size: int = 1024,
+                 num_heads: int = 16,
+                 intermediate_size: int = 4096,
                  attn_dropout_prob: float = 0.1,
                  use_one_hot_embeddings: bool = False,
                  has_key_padding_mask: bool = False,
@@ -156,8 +156,8 @@ class TransformerEncoder(nn.Cell):
         hidden_size (int): Size of the encoder layers.
         seq_len (int): The length of input sequence.
         num_layers (int): Number of layers(encoder cells) in Transformer Encoder.
-        num_heads (int): Number of attention heads in encoder cells. Default: 8.
-        intermediate_size (int): Size of intermediate layer in encoder cells. Default: 2048.
+        num_heads (int): Number of attention heads in encoder cells. Default: 16.
+        intermediate_size (int): Size of intermediate layer in encoder cells. Default: 4096.
         attn_dropout_prob (float): The dropout probability for self-attention. Default: 0.1.
         use_one_hot_embeddings (bool): Specifies whether to use one hot encoding form. Default: False.
         has_key_padding_mask (bool): Specifies whether to use key padding mask. Default: False.
@@ -170,8 +170,8 @@ class TransformerEncoder(nn.Cell):
                  hidden_size: int,
                  seq_len: int,
                  num_layers: int,
-                 num_heads: int = 8,
-                 intermediate_size: int = 2048,
+                 num_heads: int = 16,
+                 intermediate_size: int = 4096,
                  attn_dropout_prob: float = 0.1,
                  use_one_hot_embeddings: bool = False,
                  has_key_padding_mask: bool = False,
