@@ -117,6 +117,9 @@ class Vocabulary:
             raise ValueError(f"word `{word}` not in vocabulary")
         return idx
 
+    def __len__(self):
+        return len(self._word2idx)
+
     def word_to_idx(self, word: pd.Series) -> pd.Series:
         """
         Convert tokens to index.
