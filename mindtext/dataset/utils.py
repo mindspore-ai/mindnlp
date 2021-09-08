@@ -38,7 +38,8 @@ DATASET_URL = {'SST-2': 'https://dl.fbaipublicfiles.com/glue/data/SST-2.zip',
                'MNLI': 'https://dl.fbaipublicfiles.com/glue/data/MNLI.zip',
                'STS-B': 'https://dl.fbaipublicfiles.com/glue/data/STS-B.zip',
                'QQP': 'https://dl.fbaipublicfiles.com/glue/data/QQP-clean.zip',
-               'QNLI': 'https://dl.fbaipublicfiles.com/glue/data/QNLIv2.zip'}
+               'QNLI': 'https://dl.fbaipublicfiles.com/glue/data/QNLIv2.zip',
+               'AFQMC': "https://storage.googleapis.com/cluebenchmark/tasks/afqmc_public.zip"}
 
 
 def _get_dataset_url(name: str) -> str:

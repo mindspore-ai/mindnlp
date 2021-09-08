@@ -17,5 +17,5 @@
 """
 from ..common import Vocabulary, Pad
 from .classification import SST2Dataset, CoLADataset
-from .pair_classification import RTEDataset, MNLIDataset, QQPDataset, MRPCDataset, QNLIDataset
+from .pair_classification import RTEDataset, MNLIDataset, QQPDataset, MRPCDataset, QNLIDataset, AFQMCDataset
 from .regression import STSBDataset
