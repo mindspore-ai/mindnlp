@@ -410,12 +410,12 @@ class SelfAttention(nn.Cell):
         input_tensor = input_tensor.reshape(-1, self.hidden_size)
         # layer norm
         output = self.preprocess(input_tensor)
-
+        output = output.reshape(input_shape)
         if not self.is_encdec_attn:
             memory_tensor = output
 
-        output = output.reshape(input_shape)
-        memory_tensor = memory_tensor.reshape(input_shape)
+        # output = output.reshape(input_shape)
+        # memory_tensor = memory_tensor.reshape(input_shape)
         attention_output = self.attention(output, memory_tensor, attn_mask, key_padding_mask)
         input_tensor = input_tensor.reshape(input_shape)
         # dropout and residual
