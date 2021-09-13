@@ -21,3 +21,4 @@ from .qqp import QQPDataset
 from .mrpc import MRPCDataset
 from .qnli import QNLIDataset
 from .afqmc import AFQMCDataset
+from .lcqmc import LCQMCDataset
