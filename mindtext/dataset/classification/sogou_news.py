@@ -12,30 +12,67 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-"""Sogou News class"""
+"""SogouNewsDataset class"""
+from typing import Union, Dict, List
 import pandas as pd
+from pandas import DataFrame
+import mindspore.dataset as ds
+from ..base_dataset import CLSBaseDataset
 
 
-class SogouNews:
-    """ Usage of Dataset SogouNews """
+class SogouNewsDataset(CLSBaseDataset):
+    """
+    SogouNews dataset load.
 
-    def __init__(self):
-        """"""
+    Args:
+        paths (Union[str, Dict[str, str]], Optional): Dataset file path or Dataset directory path, default None.
+        tokenizer (Union[str]): Tokenizer function,default 'spacy'.
+        lang (str): Tokenizer language,default 'en'.
+        max_size (int, Optional): Vocab max size, default None.
+        min_freq (int, Optional): Min word frequency, default None.
+        padding (str): Padding token,default `<pad>`.
+        unknown (str): Unknown token,default `<unk>`.
+        buckets (List[int], Optional): Padding row to the length of buckets, default None.
 
-    def load(self, path):
-        """input path and return raw DataSet samples """
+    Examples:
+        >>> sogou = SogouNewsDataset(tokenizer='spacy', lang='en')
+        >>> dataset = sogou()
+        >>> sogou = SogouNewsDataset(tokenizer='spacy', lang='en', buckets=[16,32,64])
+        >>> dataset = sogou()
+    """
+
+    def __init__(self, paths: Union[str, Dict[str, str]] = None, tokenizer: Union[str] = 'spacy',
+                 lang: str = 'en', max_size: int = None, min_freq: int = None, padding: str = '<pad>',
+                 unknown: str = '<unk>', buckets: List[int] = None):
+        super(SogouNewsDataset, self).__init__(sep=',', name='Sogou News')
+        self._paths = paths
+        self._tokenize = tokenizer
+        self._lang = lang
+        self._vocab_max_size = max_size
+        self._vocab_min_freq = min_freq
+        self._padding = padding
+        self._unknown = unknown
+        self._buckets = buckets
+
+    def __call__(self) -> Dict[str, ds.MindDataset]:
+        self.load(self._paths)
+        self.process(tokenizer=self._tokenize, lang=self._lang, max_size=self._vocab_max_size,
+                     min_freq=self._vocab_min_freq, padding=self._padding,
+                     unknown=self._unknown, buckets=self._buckets)
+        return self.mind_datasets
+
+    def _load(self, path: str) -> DataFrame:
+        """
+               Load dataset from SogouNews file.
+
+               Args:
+                   path (str): Dataset file path.
+
+               Returns:
+                   DataFrame: Dataset file will be read as a DataFrame.
+        """
         with open(path, "r", encoding='utf-8') as reader:
-            data = pd.read_csv(reader, sep=',', header=None)
-        data.columns = ['label', 'title', 'content']
-        print(data, '\n')
-        return data
-
-    def process(self):
-        """dataset process"""
-        return None
-
-
-if __name__ == "__main__":
-    test = SogouNews()
-    df = test.load('sogou_news_csv/train.csv')
-    print(df.values[:, :])
+            dataset = pd.read_csv(reader, sep=',', header=None)
+        dataset.columns = ['label', 'sentence1', 'sentence2']
+        print(dataset, '\n')
+        return dataset
