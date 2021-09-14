@@ -15,11 +15,11 @@
 """Softmax cross entropy between logits and labels."""
 
 import mindspore.common.dtype as mstype
+import mindspore.nn as nn
 from mindspore.nn.loss.loss import _Loss
 from mindspore.common.tensor import Tensor
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
-from mindspore.ops import _selected_ops
 from mindspore._checkparam import Validator as validator
 from mindspore import context
 from mindtext.common.utils.class_factory import ClassFactory, ModuleType
@@ -92,7 +92,7 @@ class CrossEntropy(_Loss):
         super(CrossEntropy, self).__init__(reduction)
         self.sparse = validator.check_bool(sparse, "sparse")
         self.reduction = reduction
-        self.softmax_cross_entropy = _selected_ops.SoftmaxCrossEntropyWithLogits()
+        self.softmax_cross_entropy = nn.SoftmaxCrossEntropyWithLogits()
         self.one_hot = P.OneHot()
         self.on_value = Tensor(1.0, mstype.float32)
         self.off_value = Tensor(0., mstype.float32)
