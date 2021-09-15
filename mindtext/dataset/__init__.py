@@ -16,6 +16,6 @@
     Dataset init
 """
 from ..common import Vocabulary, Pad
-from .classification import SST2Dataset, CoLADataset
+from .classification import SST2Dataset, CoLADataset, ChnSentiCorpDataset
 from .pair_classification import RTEDataset, MNLIDataset, QQPDataset, MRPCDataset, QNLIDataset, AFQMCDataset, LCQMCDataset
 from .regression import STSBDataset
