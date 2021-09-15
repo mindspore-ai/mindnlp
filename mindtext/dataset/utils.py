@@ -40,7 +40,8 @@ DATASET_URL = {'SST-2': 'https://dl.fbaipublicfiles.com/glue/data/SST-2.zip',
                'QQP': 'https://dl.fbaipublicfiles.com/glue/data/QQP-clean.zip',
                'QNLI': 'https://dl.fbaipublicfiles.com/glue/data/QNLIv2.zip',
                'AFQMC': "https://storage.googleapis.com/cluebenchmark/tasks/afqmc_public.zip",
-               'WNLI': 'https://dl.fbaipublicfiles.com/glue/data/WNLI.zip'
+               'WNLI': 'https://dl.fbaipublicfiles.com/glue/data/WNLI.zip',
+               'DBpedia': 'https://s3.amazonaws.com/fast-ai-nlp/dbpedia_csv.tgz'
                }
 
 
