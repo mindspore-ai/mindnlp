@@ -58,5 +58,4 @@ class RegionEmbedding(nn.Cell):
         for conv, linear in zip(self.region_embeds, self.linears[1:]):
             x = conv(x)
             output = output + linear(x)
-        output = ops.Transpose()(output, (0, 2, 1))
         return output

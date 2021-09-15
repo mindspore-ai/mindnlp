@@ -66,6 +66,7 @@ class StaticEmbedding(TokenEmbedding):
             warnings.warn(f"StaticEmbedding will ignore {model_dir_or_name}, and randomly initialize embedding with"
                           f" dimension {embedding_dim}. If you want to use pre-trained embedding, set embedding_dim"
                           f" to 0.")
+            embedding_dim = int(embedding_dim)
             model_dir_or_name = None
         model_path = None
         if model_dir_or_name:
