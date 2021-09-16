@@ -15,13 +15,14 @@
 """
     LCQMC dataset
 """
-from typing import Union, Dict, List
+from typing import Union, Dict, List, Optional
 
 from tqdm import tqdm
 import pandas as pd
 from pandas import DataFrame
 
 from ..base_dataset import PairCLSBaseDataset
+
 
 class LCQMCDataset(PairCLSBaseDataset):
     """
@@ -43,11 +44,11 @@ class LCQMCDataset(PairCLSBaseDataset):
         >>> ds = lcqmc()
     """
 
-    def __init__(self, paths: Union[str, Dict[str, str]] = None,
-                 tokenizer: Union[str] = 'spacy', lang: str = 'en', max_size: int = None, min_freq: int = None,
-                 padding: str = '<pad>', unknown: str = '<unk>',
-                 buckets: List[int] = None):
-        super(LCQMCDataset, self).__init__(sep='\t', name='LCQMC')
+    def __init__(self, paths: Optional[Union[str, Dict[str, str]]] = None,
+                 tokenizer: Union[str] = 'spacy', lang: str = 'en', max_size: Optional[int] = None,
+                 min_freq: Optional[int] = None, padding: str = '<pad>', unknown: str = '<unk>',
+                 buckets: Optional[List[int]] = None, **kwargs):
+        super(LCQMCDataset, self).__init__(sep='\t', name='LCQMC', **kwargs)
         self._paths = paths
         self._tokenize = tokenizer
         self._lang = lang

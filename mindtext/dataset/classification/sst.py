@@ -15,7 +15,7 @@
 """
     SST-2 dataset
 """
-from typing import Union, Dict, List
+from typing import Union, Dict, List, Optional
 
 import mindspore.dataset as ds
 
@@ -42,11 +42,12 @@ class SST2Dataset(CLSBaseDataset):
         >>> ds = sst2()
     """
 
-    def __init__(self, paths: Union[str, Dict[str, str]] = None,
-                 tokenizer: Union[str] = 'spacy', lang: str = 'en', max_size: int = None, min_freq: int = None,
+    def __init__(self, paths: Optional[Union[str, Dict[str, str]]] = None,
+                 tokenizer: Union[str] = 'spacy', lang: str = 'en', max_size: Optional[int] = None,
+                 min_freq: Optional[int] = None,
                  padding: str = '<pad>', unknown: str = '<unk>',
-                 buckets: List[int] = None):
-        super(SST2Dataset, self).__init__(sep='\t', name='SST-2')
+                 buckets: Optional[List[int]] = None, **kwargs):
+        super(SST2Dataset, self).__init__(sep='\t', name='SST-2', **kwargs)
         self._paths = paths
         self._tokenize = tokenizer
         self._lang = lang

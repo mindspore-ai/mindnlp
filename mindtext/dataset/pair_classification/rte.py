@@ -15,7 +15,7 @@
 """
     RTE dataset
 """
-from typing import Union, Dict, List
+from typing import Union, Dict, List, Optional
 
 from ..base_dataset import PairCLSBaseDataset
 
@@ -40,11 +40,13 @@ class RTEDataset(PairCLSBaseDataset):
         >>> ds = rte()
     """
 
-    def __init__(self, paths: Union[str, Dict[str, str]] = None,
-                 tokenizer: Union[str] = 'spacy', lang: str = 'en', max_size: int = None, min_freq: int = None,
+    def __init__(self, paths: Optional[Union[str, Dict[str, str]]] = None,
+                 tokenizer: Union[str] = 'spacy', lang: str = 'en', max_size: Optional[int] = None,
+                 min_freq: Optional[int] = None,
                  padding: str = '<pad>', unknown: str = '<unk>',
-                 buckets: List[int] = None):
-        super(RTEDataset, self).__init__(sep='\t', name='RTE', label_map={"not_entailment": 0, "entailment": 1})
+                 buckets: Optional[List[int]] = None, **kwargs):
+        super(RTEDataset, self).__init__(sep='\t', name='RTE', label_map={"not_entailment": 0, "entailment": 1},
+                                         **kwargs)
         self._paths = paths
         self._tokenize = tokenizer
         self._lang = lang

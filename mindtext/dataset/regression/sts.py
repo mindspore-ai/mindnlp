@@ -15,13 +15,15 @@
 """
     STS-B dataset
 """
-from typing import Union, Dict, List
+from typing import Union, Dict, List, Optional
 import csv
 
+from tqdm import tqdm
 import pandas as pd
 from pandas import DataFrame
 
 from ..base_dataset import PairCLSBaseDataset
+from ..utils import get_split_func
 
 
 class STSBDataset(PairCLSBaseDataset):
@@ -44,11 +46,12 @@ class STSBDataset(PairCLSBaseDataset):
         >>> ds = sts()
     """
 
-    def __init__(self, paths: Union[str, Dict[str, str]] = None,
-                 tokenizer: Union[str] = 'spacy', lang: str = 'en', max_size: int = None, min_freq: int = None,
+    def __init__(self, paths: Optional[Union[str, Dict[str, str]]] = None,
+                 tokenizer: Union[str] = 'spacy', lang: str = 'en', max_size: Optional[int] = None,
+                 min_freq: Optional[int] = None,
                  padding: str = '<pad>', unknown: str = '<unk>',
-                 buckets: List[int] = None):
-        super(STSBDataset, self).__init__(sep='\t', name='STS-B', label_is_float=True)
+                 buckets: Optional[List[int]] = None, **kwargs):
+        super(STSBDataset, self).__init__(sep='\t', name='STS-B', label_is_float=True, **kwargs)
         self._paths = paths
         self._tokenize = tokenizer
         self._lang = lang
@@ -68,8 +71,12 @@ class STSBDataset(PairCLSBaseDataset):
     def _load(self, path: str) -> DataFrame:
         with open(path, 'r', encoding='utf-8') as f:
             columns = f.readline().strip().split('\t')
-            dataset = pd.read_csv(f, sep='\t', names=columns, quoting=csv.QUOTE_NONE)
+            dataset = pd.read_csv(f, sep='\n', names=columns, quoting=csv.QUOTE_NONE)
+            tqdm.pandas(desc=f"{self._name} dataset loadding")
+            split_row = get_split_func(dataset, '\t')
             if "score" in dataset.columns.values:
+                dataset = dataset.progress_apply(split_row, axis=1, result_type="expand")
+                dataset.columns = columns
                 dataset = dataset[['index', 'sentence1', 'sentence2', 'score']]
                 dataset.columns = ['index', 'sentence1', 'sentence2', 'label']
             else:

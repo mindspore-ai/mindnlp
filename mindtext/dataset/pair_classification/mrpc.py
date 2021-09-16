@@ -16,14 +16,16 @@
     MRPC dataset
 """
 import os
-from typing import Union, Dict, List
+from typing import Union, Dict, List, Optional
 
 import pandas as pd
 from pandas import DataFrame
 
+from tqdm import tqdm
 import mindspore.dataset as ds
 
 from ..base_dataset import PairCLSBaseDataset
+from ..utils import get_split_func
 
 
 class MRPCDataset(PairCLSBaseDataset):
@@ -47,10 +49,11 @@ class MRPCDataset(PairCLSBaseDataset):
         >>> ds = mrpc()
     """
 
-    def __init__(self, path: str, tokenizer: Union[str] = 'spacy', lang: str = 'en', max_size: int = None,
-                 min_freq: int = None, padding: str = '<pad>', unknown: str = '<unk>', buckets: List[int] = None,
-                 train_ratio: float = 0.8):
-        super(MRPCDataset, self).__init__(sep='\t', name='MRPC')
+    def __init__(self, path: str, tokenizer: Union[str] = 'spacy', lang: str = 'en', max_size: Optional[int] = None,
+                 min_freq: Optional[int] = None, padding: str = '<pad>', unknown: str = '<unk>',
+                 buckets: Optional[List[int]] = None,
+                 train_ratio: float = 0.8, **kwargs):
+        super(MRPCDataset, self).__init__(sep='\t', name='MRPC', **kwargs)
         self._path = path
         self._tokenize = tokenizer
         self._lang = lang
@@ -71,13 +74,18 @@ class MRPCDataset(PairCLSBaseDataset):
     def _load(self, path: str) -> DataFrame:
         with open(path, 'r', encoding='utf-8') as f:
             f.readline()
-            dataset = pd.read_csv(f, sep='\t', names=['label', 'ID1', 'ID2', 'sentence1', 'sentence2'])
+            dataset = pd.read_csv(f, sep='\n', names=['label', 'ID1', 'ID2', 'sentence1', 'sentence2'])
+            columns = dataset.columns.values
+            tqdm.pandas(desc=f"{self._name} dataset loadding")
+            split_row = get_split_func(dataset, '\t')
+            dataset = dataset.progress_apply(split_row, axis=1, result_type="expand")
+            dataset.columns = columns
             dataset = dataset[['label', 'sentence1', 'sentence2']]
             dataset.fillna('')
             dataset.dropna(inplace=True)
         return dataset
 
-    def load(self, paths: str = None) -> Dict[str, DataFrame]:
+    def load(self, paths: Optional[str] = None) -> Dict[str, DataFrame]:
         """
         Load MRPC dataset.
 
