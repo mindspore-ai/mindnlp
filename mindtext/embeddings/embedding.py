@@ -29,7 +29,7 @@ class Embedding(nn.Cell):
     with self.num_embeddings and the dimension of the embedding with self.embedding_dim.
 
     Args:
-        init_embed(tuple(int,int),torch.FloatTensor,nn.Embedding,numpy.ndarray): The Embedding size
+        init_embed (tuple(int,int),torch.FloatTensor,nn.Embedding,numpy.ndarray): The Embedding size
         (input tuple(int, int), the fist one is vocab_size, and the second is embedding_dim); or input
         Tensor, Embedding, numpy.ndarray to initialieze embedding.
         dropout(float): the probability of Dropout layer for the representation of the embedding.
@@ -46,16 +46,16 @@ class Embedding(nn.Cell):
 
     """
 
-    def __init__(self, init_embed: Union[Tuple[int, int], np.ndarray, mindspore.Tensor, nn.Cell], dropout=0.1):
+    def __init__(self, init_embed: Union[Tuple[int, int], np.ndarray, mindspore.Tensor, nn.Cell], dropout: float = 0.1):
         super(Embedding, self).__init__()
         self.embeddings = get_embeddings(init_embed)
-        self.dropout = nn.Dropout(dropout)
+        self.dropout = nn.Dropout(keep_prob=1 - dropout)
         self._embed_size = self.embeddings.embedding_size
 
     def __len__(self) -> int:
         return len(self.embeddings)
 
-    def construct(self, words):
+    def construct(self, words: mindspore.Tensor) -> mindspore.Tensor:
         embed = self.embeddings(words)
         return self.dropout(embed)
 
@@ -79,13 +79,13 @@ class Embedding(nn.Cell):
 class TokenEmbedding(nn.Cell):
     """Base classes for all Embedding class."""
 
-    def __init__(self, vocab: Vocabulary, dropout=0.1):
+    def __init__(self, vocab: Vocabulary, dropout: float = 0.1):
         super(TokenEmbedding, self).__init__()
         vocab.build_vocab()
         self._word_vocab = vocab
         self._word_pad_index = vocab.padding_idx
         self._word_unk_index = vocab.unknown_idx
-        self.dropout_layer = nn.Dropout(dropout)
+        self.dropout_layer = nn.Dropout(keep_prob=1.0 - dropout)
 
     def __len__(self) -> int:
         return len(self._word_vocab)
@@ -93,7 +93,7 @@ class TokenEmbedding(nn.Cell):
     def get_word_vocab(self) -> Vocabulary:
         return self._word_vocab
 
-    def dropout(self, words):
+    def dropout(self, words: mindspore.Tensor) -> mindspore.Tensor:
         return self.dropout_layer(words)
 
     @property
@@ -117,5 +117,5 @@ class TokenEmbedding(nn.Cell):
         return self.num_embeddings, self.embedding_dim
 
     @abstractmethod
-    def construct(self, words):
+    def construct(self, words: mindspore.Tensor):
         raise NotImplementedError

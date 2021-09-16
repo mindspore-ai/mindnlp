@@ -31,7 +31,7 @@ class StaticEmbedding(TokenEmbedding):
     embedding according to vocab. If embedding is not found, we initialize it with a random embedding.
 
     Args:
-        vocab(Vocabulary): Vocabulary object。StaticEmbedding will only load the word vector of the word contained
+        vocab(Vocabulary): Vocabulary object. StaticEmbedding will only load the word vector of the word contained
         in the word list, using a random initialization if it is not found in the pretrained embedding.
         model_dir_or_name(Union[str, None]):There are two ways to call pretrained static embedding: the first way
         is to pass in the local folder (there should be only one file with the suffix .txt) or the file path. The
@@ -70,7 +70,7 @@ class StaticEmbedding(TokenEmbedding):
             model_dir_or_name = None
         model_path = None
         if model_dir_or_name:
-            model_path = 'mindtext/embeddings/en-glove.6B.100d.txt'
+            model_path = './en-glove.6B.100d.txt'
         if model_path:
             embedding = self._load_with_vocab(model_path, vocab)
         else:

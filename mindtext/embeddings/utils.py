@@ -17,7 +17,8 @@ from typing import Optional
 import numpy as np
 
 import mindspore
-import mindspore.nn as nn
+from mindspore import nn
+from ..common.data.vocabulary import Vocabulary
 
 
 def get_embeddings(init_embed, padding_idx: Optional[int] = None):
@@ -26,6 +27,10 @@ def get_embeddings(init_embed, padding_idx: Optional[int] = None):
     initialized. If the input is numpy.ndarray type, nn.Embedding is initialized with numpy.ndarray value;
     If mindspore.Tensor, initialize nn.Embedding with Tensor value; If the input is embedding object of mindspore,
     the original object is returned without processing.
+
+    Args:
+        init_embed: The initialized params for embedding.
+        padding_idx (int, Optional): The padding index for embedding.
     """
     if isinstance(init_embed, tuple):
         embeddings = nn.Embedding(vocab_size=init_embed[0], embedding_size=init_embed[1], padding_idx=padding_idx)
@@ -41,3 +46,30 @@ def get_embeddings(init_embed, padding_idx: Optional[int] = None):
     else:
         raise TypeError(f"invalid init_embed type: {type(init_embed)}")
     return embeddings
+
+
+def _construct_char_vocab_from_vocab(vocab: Vocabulary, min_freq: int = 1, include_word_start_end: bool = True):
+    """
+    Given the vocabulary of a word, then generating the vocabulary of the character.
+
+    Args:
+        vocab (Vocabulary): The vocabulary of a word.
+        min_freq (int): The min frequency of a word.
+        include_word_start_end (bool): Include special <bow> and <eos> or not.
+
+    Returns:
+        char_vocab (Vocabulary): The vocabulary of the character.
+
+    :param vocab: 从vocab
+    :param min_freq:
+    :param include_word_start_end: 是否需要包含特殊的<bow>和<eos>
+    :return:
+    """
+    char_vocab = Vocabulary(min_freq=min_freq)
+    char_vocab.build_vocab()
+    for word in vocab.word_count.keys():
+        # if not vocab._is_word_no_create_entry(word):
+        char_vocab.update(list(word))
+    if include_word_start_end:
+        char_vocab.update(['<bow>', '<eow>'])
+    return char_vocab
