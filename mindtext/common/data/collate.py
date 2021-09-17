@@ -15,7 +15,7 @@
 """
 PAD operation
 """
-from typing import Union, List
+from typing import Union, List, Tuple, Optional
 
 
 def _get_bucket_length(x, bts):
@@ -40,14 +40,14 @@ class Pad:
 
      """
 
-    def __init__(self, max_length: int = 0, pad_val: Union[float, int] = 0, buckets: List[int] = None,
+    def __init__(self, max_length: int = 0, pad_val: Union[float, int] = 0, buckets: Optional[List[int]] = None,
                  pad_right: bool = True):
         self.pad_val = pad_val
         self.max_length = max_length
         self.buckets = buckets
         self.pad_right = pad_right
 
-    def __call__(self, data: List[int]) -> List[int]:
+    def __call__(self, data: List[int]) -> Tuple[List[int], int]:
         """
         Args:
             data (List[int]): The input data.
@@ -63,7 +63,7 @@ class Pad:
             >>> print(result)
             (1,2,3,4,5,6,0,0,0,0)
         """
-        if self.buckets is not None:
+        if isinstance(self.buckets, List):
             self.max_length = _get_bucket_length(data, self.buckets)
         if self.pad_right:
             data = data + (self.max_length - len(data)) * [self.pad_val]

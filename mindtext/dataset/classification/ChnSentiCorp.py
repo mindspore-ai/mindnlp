@@ -15,7 +15,7 @@
 """
     ChnSentiCorp dataset
 """
-from typing import Union, Dict, List
+from typing import Union, Dict, List, Optional
 
 import pandas as pd
 from pandas import DataFrame
@@ -43,11 +43,12 @@ class ChnSentiCorpDataset(CLSBaseDataset):
         ds = ChnSentiCorp()
     """
 
-    def __init__(self, paths: Union[str, Dict[str, str]] = None,
-                 tokenizer: Union[str] = 'spacy', lang: str = 'en', max_size: int = None, min_freq: int = None,
+    def __init__(self, paths: Optional[Union[str, Dict[str, str]]] = None,
+                 tokenizer: Union[str] = 'spacy', lang: str = 'en', max_size: Optional[int] = None,
+                 min_freq: Optional[int] = None,
                  padding: str = '<pad>', unknown: str = '<unk>',
-                 buckets: List[int] = None):
-        super(ChnSentiCorpDataset, self).__init__(sep='\t', name='ChnSentiCorp')
+                 buckets: Optional[List[int]] = None, **kwargs):
+        super(ChnSentiCorpDataset, self).__init__(sep='\t', name='ChnSentiCorp', **kwargs)
         self._paths = paths
         self._tokenize = tokenizer
         self._lang = lang

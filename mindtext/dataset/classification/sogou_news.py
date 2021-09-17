@@ -13,7 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """SogouNewsDataset class"""
-from typing import Union, Dict, List
+from typing import Union, Dict, List, Optional
 import pandas as pd
 from pandas import DataFrame
 import mindspore.dataset as ds
@@ -41,10 +41,11 @@ class SogouNewsDataset(CLSBaseDataset):
         >>> dataset = sogou()
     """
 
-    def __init__(self, paths: Union[str, Dict[str, str]] = None, tokenizer: Union[str] = 'spacy',
-                 lang: str = 'en', max_size: int = None, min_freq: int = None, padding: str = '<pad>',
-                 unknown: str = '<unk>', buckets: List[int] = None):
-        super(SogouNewsDataset, self).__init__(sep=',', name='Sogou News')
+    def __init__(self, paths: Optional[Union[str, Dict[str, str]]] = None, tokenizer: Union[str] = 'spacy',
+                 lang: str = 'en', max_size: Optional[int] = None, min_freq: Optional[int] = None,
+                 padding: str = '<pad>',
+                 unknown: str = '<unk>', buckets: Optional[List[int]] = None, **kwargs):
+        super(SogouNewsDataset, self).__init__(sep=',', name='Sogou News', **kwargs)
         self._paths = paths
         self._tokenize = tokenizer
         self._lang = lang

@@ -13,7 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """vocabulary class"""
-from typing import List, Union, Dict
+from typing import List, Union, Dict, Optional
 from collections import Counter
 
 import pandas as pd
@@ -36,9 +36,11 @@ class Vocabulary:
         >>> vocab.update(word_list)
         >>> vocab["word"] # tokens to int
         >>> vocab.to_word(5) # int to tokens
+        >>> vocab.build_vocab() # build vocabulary
     """
 
-    def __init__(self, max_size: int = None, min_freq: int = None, padding: str = '<pad>', unknown: str = '<unk>'):
+    def __init__(self, max_size: Optional[int] = None, min_freq: Optional[int] = None, padding: str = '<pad>',
+                 unknown: str = '<unk>'):
         self.max_size = max_size
         self.min_freq = min_freq
         self.word_count = Counter()
@@ -130,7 +132,8 @@ class Vocabulary:
         Returns:
             Series: Converted Series.
         """
-        index = word.apply(lambda n: [self[i] for i in n])
+        tqdm.pandas(desc=f"Convert tokens to index.")
+        index = word.progress_apply(lambda n: [self[i] for i in n])
         return index
 
     def idx_to_word(self, index: pd.Series) -> pd.Series:
@@ -143,12 +146,13 @@ class Vocabulary:
         Returns:
             Series: Converted dataset.
         """
-        word = index.apply(lambda n: [self.to_word(i) for i in n])
+        tqdm.pandas(desc=f"Convert index(`{index.name}` field) to tokens.")
+        word = index.progress_apply(lambda n: [self.to_word(i) for i in n])
         return word
 
     @staticmethod
-    def from_dataset(dataset: pd.DataFrame, field_name: Union[str, List[str]], max_size: int = None,
-                     min_freq: int = None, padding: str = '<pad>', unknown: str = '<unk>'):
+    def from_dataset(dataset: pd.DataFrame, field_name: Union[str, List[str]], max_size: Optional[int] = None,
+                     min_freq: Optional[int] = None, padding: str = '<pad>', unknown: str = '<unk>'):
         """
         Build a Vocabulary from a dataset.
 

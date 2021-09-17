@@ -16,14 +16,16 @@
     MNLI dataset
 """
 import os
-from typing import Union, Dict, List
+from typing import Union, Dict, List, Optional
 
+from tqdm import tqdm
 import pandas as pd
 from pandas import DataFrame
 
 import mindspore.dataset as ds
 
 from ..base_dataset import PairCLSBaseDataset
+from ..utils import get_split_func
 
 
 class MNLIDataset(PairCLSBaseDataset):
@@ -46,12 +48,13 @@ class MNLIDataset(PairCLSBaseDataset):
         >>> ds = mnli()
     """
 
-    def __init__(self, paths: Union[str, Dict[str, str]] = None,
-                 tokenizer: Union[str] = 'spacy', lang: str = 'en', max_size: int = None, min_freq: int = None,
+    def __init__(self, paths: Optional[Union[str, Dict[str, str]]] = None,
+                 tokenizer: Union[str] = 'spacy', lang: str = 'en', max_size: Optional[int] = None,
+                 min_freq: Optional[int] = None,
                  padding: str = '<pad>', unknown: str = '<unk>',
-                 buckets: List[int] = None):
+                 buckets: Optional[List[int]] = None, **kwargs):
         super(MNLIDataset, self).__init__(sep='\t', name='MNLI',
-                                          label_map={'contradiction': 0, 'neutral': 1, 'entailment': 2})
+                                          label_map={'contradiction': 0, 'neutral': 1, 'entailment': 2}, **kwargs)
         self._paths = paths
         self._tokenize = tokenizer
         self._lang = lang
@@ -71,11 +74,18 @@ class MNLIDataset(PairCLSBaseDataset):
     def _load(self, path: str) -> DataFrame:
         with open(path, 'r', encoding='utf-8') as f:
             columns = f.readline().strip().split('\t')
-            dataset = pd.read_csv(f, sep='\t', names=columns)
+            dataset = pd.read_csv(f, sep='\n', names=columns)
+            tqdm.pandas(desc=f"{self._name} dataset loadding")
+            split_row = get_split_func(dataset, '\t')
             if "gold_label" in dataset.columns.values:
+                dataset = dataset.progress_apply(split_row, axis=1, result_type="expand")
+                dataset.columns = columns
                 dataset = dataset[['index', 'sentence1', 'sentence2', 'gold_label']]
                 dataset.columns = ['index', 'sentence1', 'sentence2', 'label']
+
             else:
+                dataset = dataset.progress_apply(split_row, axis=1, result_type="expand")
+                dataset.columns = columns
                 dataset = dataset[['index', 'sentence1', 'sentence2']]
             dataset.fillna('')
             dataset.dropna(inplace=True)

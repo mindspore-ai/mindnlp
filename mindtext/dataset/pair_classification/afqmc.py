@@ -48,8 +48,8 @@ class AFQMCDataset(PairCLSBaseDataset):
                  tokenizer: Union[str] = 'spacy', lang: str = 'en', max_size: Optional[int] = None,
                  min_freq: Optional[int] = None,
                  padding: str = '<pad>', unknown: str = '<unk>',
-                 buckets: Optional[List[int]] = None):
-        super(AFQMCDataset, self).__init__(sep='\t', name='AFQMC')
+                 buckets: Optional[List[int]] = None, **kwargs):
+        super(AFQMCDataset, self).__init__(sep='\t', name='AFQMC', **kwargs)
         self._paths = paths
         self._tokenize = tokenizer
         self._lang = lang

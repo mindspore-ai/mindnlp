@@ -15,7 +15,7 @@
 """
     CMNLI dataset
 """
-from typing import Union, Dict, List
+from typing import Union, Dict, List, Optional
 
 import pandas as pd
 from pandas import DataFrame
@@ -43,10 +43,11 @@ class CMNLIDataset(PairCLSBaseDataset):
        #>>> cm = cmnli()
     """
 
-    def __init__(self, paths: Union[str, Dict[str, str]] = None,
-                 tokenizer: Union[str] = 'cn-char', lang: str = 'en', max_size: int = None, min_freq: int = None,
+    def __init__(self, paths: Optional[Union[str, Dict[str, str]]] = None,
+                 tokenizer: Union[str] = 'cn-char', lang: str = 'en', max_size: Optional[int] = None,
+                 min_freq: Optional[int] = None,
                  padding: str = '<pad>', unknown: str = '<unk>',
-                 buckets: List[int] = None, **kwargs):
+                 buckets: Optional[List[int]] = None, **kwargs):
         super(CMNLIDataset, self).__init__(sep='\t', name='CMNLI',
                                            label_map={'contradiction': 0, 'neutral': 1, 'entailment': 2}, **kwargs)
         self._paths = paths

@@ -22,15 +22,18 @@ import tempfile
 import logging
 from pathlib import Path
 from urllib.parse import urlparse
-from typing import Union, Dict, List, Tuple
-from pkg_resources import parse_version
+from typing import Union, Dict, List, Tuple, Optional
 
 import requests
 from requests import HTTPError
 
-from tqdm import tqdm
+from pkg_resources import parse_version
+import pandas as pd
 
-logging.basicConfig(level=logging.NOTSET)
+from tqdm import tqdm
+from transformers import AutoTokenizer
+
+logging.basicConfig(level=logging.ERROR)
 
 DATASET_URL = {'SST-2': 'https://dl.fbaipublicfiles.com/glue/data/SST-2.zip',
                'CoLA': 'https://dl.fbaipublicfiles.com/glue/data/CoLA.zip',
@@ -41,8 +44,7 @@ DATASET_URL = {'SST-2': 'https://dl.fbaipublicfiles.com/glue/data/SST-2.zip',
                'QNLI': 'https://dl.fbaipublicfiles.com/glue/data/QNLIv2.zip',
                'AFQMC': "https://storage.googleapis.com/cluebenchmark/tasks/afqmc_public.zip",
                'WNLI': 'https://dl.fbaipublicfiles.com/glue/data/WNLI.zip',
-               'DBpedia': 'https://s3.amazonaws.com/fast-ai-nlp/dbpedia_csv.tgz'
-               }
+               'DBpedia': 'https://s3.amazonaws.com/fast-ai-nlp/dbpedia_csv.tgz'}
 
 
 def _get_dataset_url(name: str) -> str:
@@ -117,7 +119,7 @@ def get_cache_path() -> str:
     return dataset_cache_dir
 
 
-def get_from_cache(url: str, cache_dir: Path = None) -> Path:
+def get_from_cache(url: List[str], cache_dir: Optional[Path] = None) -> Path:
     """
     Find the file defined by the url in cache.
     If not found,downloading from the url and placed under cache.
@@ -130,9 +132,10 @@ def get_from_cache(url: str, cache_dir: Path = None) -> Path:
         Path: The dataset path in cache directory.
     """
     cache_dir.mkdir(parents=True, exist_ok=True)
-
+    dir_name = url[0]
+    url = url[1]
     filename = re.sub(r".+/", "", url)
-    dir_name, suffix = split_filename_suffix(filename)
+    _, suffix = split_filename_suffix(filename)
     cache_path = cache_dir / dir_name
 
     # Get cache path to put the file.
@@ -194,7 +197,7 @@ def get_from_cache(url: str, cache_dir: Path = None) -> Path:
     return filepath
 
 
-def cached_path(url_or_filename: str, cache_dir: str = '', name: str = None) -> Path:
+def cached_path(url_or_filename: List[str], cache_dir: str = '', name: Optional[str] = None) -> Path:
     """
     Given a url,try to find the file under {cache_dir}/{name}/{filename} by parsing the filename from the url.
     1. If cache_dir=None, then cache_dir=~/.mindtext /; Otherwise the cache_dir = cache_dir.
@@ -219,7 +222,7 @@ def cached_path(url_or_filename: str, cache_dir: str = '', name: str = None) -> 
     if name:
         data_cache = os.path.join(data_cache, name)
 
-    parsed = urlparse(url_or_filename)
+    parsed = urlparse(url_or_filename[1])
 
     if parsed.scheme in ("http", "https"):
         # URL, so get it from the cache (downloading if necessary).
@@ -385,7 +388,7 @@ def get_tokenizer(tokenize_method: str, lang: str = 'en'):
 
     Args:
         tokenize_method (str): Select a tokenizer method.
-        lang (str): Tokenizer language, default English.
+        lang (str, Optional): Tokenizer language(when using `spacy` tokenizer), default English.
 
     Returns:
         function: A tokenizer function.
@@ -412,7 +415,11 @@ def get_tokenizer(tokenize_method: str, lang: str = 'en'):
     elif tokenize_method in tokenizer_dict:
         tokenizer = tokenizer_dict[tokenize_method]
     else:
-        raise RuntimeError(f"Only support {tokenizer_dict.keys()} tokenizer.")
+        try:
+            tokenizer = AutoTokenizer.from_pretrained(tokenize_method)
+        except BaseException:
+            raise RuntimeError(
+                f"'{tokenize_method}' should be a {tokenizer_dict.keys()} tokenizer or a pretrained model tokenizer.")
     return tokenizer
 
 
@@ -454,3 +461,13 @@ def _get_dataset_type(dataset_file_name: str) -> str:
             d_t = i
             break
     return d_t
+
+
+def get_split_func(data: pd.DataFrame, sep: str) -> callable:
+    col_name = data.columns.values[0]
+
+    def _split_func(row):
+        row_data = row[col_name].strip().split(sep)
+        return row_data
+
+    return _split_func

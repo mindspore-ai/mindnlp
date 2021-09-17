@@ -15,7 +15,7 @@
 """
     DBPedia Ontology dataset
 """
-from typing import Union, Dict, List
+from typing import Union, Dict, List, Optional
 import pandas as pd
 from pandas import DataFrame
 import mindspore.dataset as ds
@@ -42,10 +42,11 @@ class DBpediaDataset(CLSBaseDataset):
         >>> ds = dbpedia()
     """
 
-    def __init__(self, paths: Union[str, Dict[str, str]] = None,
-                 tokenizer: Union[str] = 'spacy', lang: str = 'en', max_size: int = None, min_freq: int = None,
+    def __init__(self, paths: Optional[Union[str, Dict[str, str]]] = None,
+                 tokenizer: Union[str] = 'spacy', lang: str = 'en', max_size: Optional[int] = None,
+                 min_freq: Optional[int] = None,
                  padding: str = '<pad>', unknown: str = '<unk>',
-                 buckets: List[int] = None, **kwargs):
+                 buckets: Optional[List[int]] = None, **kwargs):
         super(DBpediaDataset, self).__init__(sep=',', name='dbpedia', **kwargs)
         self._paths = paths
         self._tokenize = tokenizer

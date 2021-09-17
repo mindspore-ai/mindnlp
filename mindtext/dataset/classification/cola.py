@@ -15,14 +15,16 @@
 """
     CoLA dataset
 """
-from typing import Union, Dict, List
+from typing import Union, Dict, List, Optional
 
+from tqdm import tqdm
 import pandas as pd
 from pandas import DataFrame
 
 import mindspore.dataset as ds
 
 from ..base_dataset import CLSBaseDataset
+from ..utils import get_split_func
 
 
 class CoLADataset(CLSBaseDataset):
@@ -45,11 +47,12 @@ class CoLADataset(CLSBaseDataset):
         >>> ds = cola()
     """
 
-    def __init__(self, paths: Union[str, Dict[str, str]] = None,
-                 tokenizer: Union[str] = 'spacy', lang: str = 'en', max_size: int = None, min_freq: int = None,
+    def __init__(self, paths: Optional[Union[str, Dict[str, str]]] = None,
+                 tokenizer: Union[str] = 'spacy', lang: str = 'en', max_size: Optional[int] = None,
+                 min_freq: Optional[int] = None,
                  padding: str = '<pad>', unknown: str = '<unk>',
-                 buckets: List[int] = None):
-        super(CoLADataset, self).__init__(sep='\t', name='CoLA')
+                 buckets: Optional[List[int]] = None, **kwargs):
+        super(CoLADataset, self).__init__(sep='\t', name='CoLA', **kwargs)
         self._paths = paths
         self._tokenize = tokenizer
         self._lang = lang
@@ -80,9 +83,19 @@ class CoLADataset(CLSBaseDataset):
             cls = len(f.readline().strip().split())
         with open(path, 'r', encoding='utf-8') as f:
             if cls == 2:
-                dataset = pd.read_csv(f, sep='\t', names=['index', 'sentence'])
+                dataset = pd.read_csv(f, sep='\n', names=['index', 'sentence'])
+                columns = dataset.columns.values
+                split_row = get_split_func(dataset, '\t')
+                tqdm.pandas(desc=f"{self._name} dataset loadding")
+                dataset = dataset.progress_apply(split_row, axis=1, result_type="expand")
+                dataset.columns = columns
             else:
-                dataset = pd.read_csv(f, sep='\t', names=['source', 'label', 'originalLabel', 'sentence'])
+                dataset = pd.read_csv(f, sep='\n', names=['source', 'label', 'originalLabel', 'sentence'])
+                columns = dataset.columns.values
+                split_source_row = get_split_func(dataset, '\t')
+                tqdm.pandas(desc=f"{self._name} dataset loadding")
+                dataset = dataset.progress_apply(split_source_row, axis=1, result_type="expand")
+                dataset.columns = columns
                 dataset = dataset[['sentence', 'label']]
         dataset.fillna('')
         dataset.dropna(inplace=True)

@@ -15,13 +15,14 @@
 """
     MRPC dataset
 """
-from typing import Union, Dict, List
+from typing import Union, Dict, List, Optional
 
 from tqdm import tqdm
 import pandas as pd
 from pandas import DataFrame
 
 from ..base_dataset import PairCLSBaseDataset
+from ..utils import get_split_func
 
 
 class WNLIDataset(PairCLSBaseDataset):
@@ -44,11 +45,12 @@ class WNLIDataset(PairCLSBaseDataset):
         >>> ds = wnli()
     """
 
-    def __init__(self, paths: Union[str, Dict[str, str]] = None,
-                 tokenizer: Union[str] = 'spacy', lang: str = 'en', max_size: int = None, min_freq: int = None,
+    def __init__(self, paths: Optional[Union[str, Dict[str, str]]] = None,
+                 tokenizer: Union[str] = 'spacy', lang: str = 'en', max_size: Optional[int] = None,
+                 min_freq: Optional[int] = None,
                  padding: str = '<pad>', unknown: str = '<unk>',
-                 buckets: List[int] = None):
-        super(WNLIDataset, self).__init__(sep='\t', name='WNLI', label_map={"0": 0, "1": 1})
+                 buckets: Optional[List[int]] = None, **kwargs):
+        super(WNLIDataset, self).__init__(sep='\t', name='WNLI', label_map={"0": 0, "1": 1}, **kwargs)
         self._paths = paths
         self._tokenize = tokenizer
         self._lang = lang
@@ -70,21 +72,17 @@ class WNLIDataset(PairCLSBaseDataset):
             columns = f.readline().strip().split('\t')
             dataset = pd.read_csv(f, sep='\n', names=columns)
             tqdm.pandas(desc=f"{self._name} dataset loadding")
+            split_row = get_split_func(dataset, '\t')
             if "label" in dataset.columns.values:
+                dataset = dataset.progress_apply(split_row, axis=1, result_type="expand")
+                dataset.columns = columns
                 dataset = dataset[['index', 'sentence1', 'sentence2', 'label']]
-                dataset.columns = ['index', 'sentence1', 'sentence2', 'label']
-                dataset[['index', 'sentence1', 'sentence2', 'label']] = dataset.progress_apply(_split_row, axis=1,
-                                                                                               result_type="expand")
+
             else:
+                dataset = dataset.progress_apply(split_row, axis=1, result_type="expand")
+                dataset.columns = columns
                 dataset = dataset[['index', 'sentence1', 'sentence2']]
-                dataset.columns = ['index', 'sentence1', 'sentence2']
-                dataset[['index', 'sentence1', 'sentence2']] = dataset.progress_apply(_split_row, axis=1,
-                                                                                      result_type="expand")
+
             dataset.fillna('')
             dataset.dropna(inplace=True)
         return dataset
-
-
-def _split_row(row):
-    row_data = row['index'].strip().split('\t')
-    return row_data
