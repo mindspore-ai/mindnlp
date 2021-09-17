@@ -127,13 +127,17 @@ setup(
         'build_py': BuildPy,
     },
     install_requires=[
-        'pandas >= 1.2.4',
-        'spacy >= 2.3.1',
-        'numpy >= 1.20.3',
-        'mindspore >= 1.2.0',
-        'tqdm >= 4.61.1',
         'PyYAML >= 5.4.1',
         'scikit_learn >= 0.24.1',
+        'six >= 1.16.0',
+        'pandas >= 1.2.4',
+        'transformers >= 4.10.0',
+        'spacy >= 3.1.2',
+        'datasets >= 1.12.0',
+        'tqdm >= 4.62.2',
+        'requests >= 2.25.1',
+        'numpy >= 1.21.2',
+        'mindspore_gpu >= 1.3.0',
     ],
     classifiers=[
         'License :: OSI Approved :: Apache Software License'
