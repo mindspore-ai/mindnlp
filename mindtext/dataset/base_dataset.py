@@ -73,6 +73,11 @@ class Dataset:
         self._num_parallel_workers = kwargs.pop("num_parallel_workers", None)
         self._columns_list = kwargs.pop("columns_list", None)
         self._test_columns_list = kwargs.pop("test_columns_list", None)
+        self._truncation_strategy = kwargs.pop("truncation_strategy", None)
+        self._max_length = kwargs.pop("max_length", None)
+        self._max_pair_length = kwargs.pop("max_pair_length", None)
+        if isinstance(self._max_length, int) and isinstance(self._buckets, List):
+            raise TypeError("Max_length and buckets cannot be assigned at the same time.")
 
     def from_cache(self, columns_list: List[str], test_columns_list: List[str], repeat_dataset: int = 1,
                    batch_size: int = 8, num_parallel_workers: Optional[int] = None) -> Dict[str, ds.MindDataset]:
@@ -373,17 +378,35 @@ class Dataset:
         tqdm.pandas(desc=f"{self._name} {dataset_type} dataset {field} preprocess bar(tokenize).")
         if isinstance(self._tokenizer, PreTrainedTokenizerBase):
             def tokenizer(row):
-                if isinstance(self, PairCLSBaseDataset):
-                    data = self._tokenizer(row['sentence1'], row['sentence2'], return_length=True)
-                else:
-                    data = self._tokenizer(row, return_length=True)
-                data['length'] = data['length'][0]
                 if isinstance(self._buckets, List):
+                    if isinstance(self, PairCLSBaseDataset):
+                        length = len(
+                            self._tokenizer.tokenize(row['sentence1'], row['sentence2'], add_special_tokens=True))
+                    else:
+                        length = len(self._tokenizer.tokenize(row, add_special_tokens=True))
                     i = 0
                     for i in self._buckets:
-                        if i >= data['length']:
+                        if i >= length:
                             break
-                    data = self._tokenizer.pad(data, padding="max_length", max_length=i)
+                    if length > i:
+                        if isinstance(self, PairCLSBaseDataset):
+                            data = self._tokenizer(row['sentence1'], row['sentence2'],
+                                                   truncation_strategy=self._truncation_strategy,
+                                                   max_length=i)
+                        else:
+                            data = self._tokenizer(row, truncation_strategy=self._truncation_strategy, max_length=i)
+                    else:
+                        if isinstance(self, PairCLSBaseDataset):
+                            data = self._tokenizer(row['sentence1'], row['sentence2'], padding="max_length",
+                                                   max_length=i)
+                        else:
+                            data = self._tokenizer(row, padding="max_length",
+                                                   max_length=i)
+                else:
+                    if isinstance(self, PairCLSBaseDataset):
+                        data = self._tokenizer(row['sentence1'], row['sentence2'], return_length=True)
+                    else:
+                        data = self._tokenizer(row, return_length=True)
                 data = [v for k, v in data.items()]
                 return data
 
@@ -543,14 +566,18 @@ class CLSBaseDataset(Dataset):
             dataset.drop('sentence', axis=1, inplace=True)
             dataset['input_length'] = self.get_length_progress(dataset, dataset_type, 'input_ids')
             if not buckets:
-                max_length = dataset['input_length'].max()
+                if isinstance(self._max_length, int):
+                    max_length = self._max_length
+                else:
+                    max_length = dataset['input_length'].max()
                 pad = Pad(max_length, self._vocab.padding_idx)
             else:
                 pad = Pad(self._vocab.padding_idx, buckets=buckets)
             dataset['input_ids'] = self.padding_progress(dataset, dataset_type, field='input_ids', pad_function=pad)
             dataset['padding_length'] = self.get_length_progress(dataset, dataset_type, 'input_ids')
         else:
-            self._pretrained_model_inputs = list(self._tokenizer("", return_length=True).data.keys())
+            self._pretrained_model_inputs = list(
+                self._tokenizer("", return_length=not isinstance(self._buckets, List)).data.keys())
             dataset_tokenized = DataFrame(self.tokenize_progress(dataset, dataset_type, field='sentence'))
             dataset.drop('sentence', axis=1, inplace=True)
 
@@ -561,7 +588,11 @@ class CLSBaseDataset(Dataset):
             dataset_tokenized = dataset_tokenized.apply(_list_split, axis=1, result_type='expand')
             if not isinstance(self._buckets, List):
                 dataset_tokenized.columns = self._pretrained_model_inputs
-                self._buckets = dataset_tokenized['length'].max()
+                if isinstance(self._max_length, int):
+                    self._buckets = self._max_length
+                else:
+                    self._buckets = dataset_tokenized['length'].max()
+
                 dataset_tokenized = DataFrame(
                     self.padding_progress(dataset_tokenized, dataset_type, pad_function=self._tokenizer.pad))
             dataset_tokenized.columns = self._pretrained_model_inputs
@@ -571,7 +602,8 @@ class CLSBaseDataset(Dataset):
             if 'label' in dataset.columns.values:
                 dataset_tokenized['label'] = dataset['label']
             dataset = dataset_tokenized
-            self._pretrained_model_inputs.remove("length")
+            if not isinstance(self._buckets, List):
+                self._pretrained_model_inputs.remove("length")
         return dataset
 
     def _write_to_mr(self, dataset: DataFrame, file_path: str, is_test: bool) -> List[str]:
@@ -659,21 +691,21 @@ class PairCLSBaseDataset(Dataset):
     def _process(self, dataset: DataFrame, max_size: int, min_freq: int, padding: str, unknown: str,
                  dataset_type: str, buckets: List[int]) -> DataFrame:
         """
-        Pair text classification dataset preprocess function.
+               Pair text classification dataset preprocess function.
 
-        Args:
-            dataset (DataFrame): DataFrame need to preprocess.
-            max_size (int): Vocab max size.
-            min_freq (int): Min word frequency.
-            padding (str): Padding token.
-            unknown (str): Unknown token.
-            dataset_type (str): Dataset type(train, dev, test).
-                Different types of datasets may be preprocessed differently.
-            buckets (List[int]): Padding row to the length of buckets.
+               Args:
+                   dataset (DataFrame): DataFrame need to preprocess.
+                   max_size (int): Vocab max size.
+                   min_freq (int): Min word frequency.
+                   padding (str): Padding token.
+                   unknown (str): Unknown token.
+                   dataset_type (str): Dataset type(train, dev, test).
+                       Different types of datasets may be preprocessed differently.
+                   buckets (List[int]): Padding row to the length of buckets.
 
-        Returns:
-            DataFrame: Preprocessed dataset.
-        """
+               Returns:
+                   DataFrame: Preprocessed dataset.
+               """
         # Whether using a pretrained model tokenizer.
         if not isinstance(self._tokenizer, PreTrainedTokenizerBase):
             dataset["sentence1"] = self.tokenize_progress(dataset, dataset_type, 'sentence1')
@@ -693,8 +725,14 @@ class PairCLSBaseDataset(Dataset):
             dataset['input1_length'] = self.get_length_progress(dataset, dataset_type, 'input1_ids')
             dataset['input2_length'] = self.get_length_progress(dataset, dataset_type, 'input2_ids')
             if not buckets:
-                max_length1 = dataset['input1_length'].max()
-                max_length2 = dataset['input2_length'].max()
+                if isinstance(self._max_length, int):
+                    max_length1 = self._max_length
+                else:
+                    max_length1 = dataset['input1_length'].max()
+                if isinstance(self._max_pair_length, int):
+                    max_length2 = self._max_pair_length
+                else:
+                    max_length2 = dataset['input2_length'].max()
                 pad1 = Pad(max_length1, self._vocab.padding_idx)
                 pad2 = Pad(max_length2, self._vocab.padding_idx)
                 dataset['input1_ids'] = self.padding_progress(dataset, dataset_type, field='input1_ids',
@@ -713,7 +751,8 @@ class PairCLSBaseDataset(Dataset):
                 dataset['padding_length'] = self.get_length_progress(dataset, dataset_type, 'input1_ids')
 
         else:
-            self._pretrained_model_inputs = list(self._tokenizer("", return_length=True).data.keys())
+            self._pretrained_model_inputs = list(
+                self._tokenizer("", return_length=not isinstance(self._buckets, List)).data.keys())
             if dataset_type != 'test':
                 if not self._label_is_float and isinstance(self._label_map, Dict):
                     dataset['label'] = dataset['label'].map(self.label_to_idx)
@@ -724,7 +763,10 @@ class PairCLSBaseDataset(Dataset):
 
             if not isinstance(self._buckets, List):
                 dataset_tokenized.columns = self._pretrained_model_inputs
-                self._buckets = dataset_tokenized['length'].max()
+                if isinstance(self._max_length, int):
+                    self._buckets = self._max_length
+                else:
+                    self._buckets = dataset_tokenized['length'].max()
                 dataset_tokenized = DataFrame(
                     self.padding_progress(dataset_tokenized, dataset_type, pad_function=self._tokenizer.pad))
             dataset_tokenized.columns = self._pretrained_model_inputs
@@ -734,7 +776,8 @@ class PairCLSBaseDataset(Dataset):
             if 'label' in dataset.columns.values:
                 dataset_tokenized['label'] = dataset['label']
             dataset = dataset_tokenized
-            self._pretrained_model_inputs.remove("length")
+            if not isinstance(self._buckets, List):
+                self._pretrained_model_inputs.remove("length")
         return dataset
 
     def _write_to_mr(self, dataset: DataFrame, file_path: str, is_test: bool) -> List[str]:

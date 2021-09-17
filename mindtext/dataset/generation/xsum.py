@@ -25,7 +25,7 @@ from datasets import load_dataset
 from transformers import PreTrainedTokenizerBase
 from mindspore.mindrecord import FileWriter
 
-from .. import Vocabulary
+from .. import Vocabulary, Pad
 from ..base_dataset import Dataset
 
 
@@ -91,6 +91,15 @@ class XSUMDataset(Dataset):
 
                 documnet_length = len(documnet_index)
                 summary_length = len(summary_index)
+                if documnet_length > self._max_length:
+                    documnet_index = documnet_index[:self._max_length / 2] + documnet_index[-self._max_length / 2:]
+                else:
+                    documnet_index = Pad.padding(documnet_index, self._max_length)
+                if summary_length > self._max_pair_length:
+                    summary_index = summary_index[:self._max_pair_length / 2] + summary_index[
+                        -self._max_pair_length / 2:]
+                else:
+                    summary_index = Pad.padding(summary_index, self._max_pair_length)
                 return documnet_index, documnet_length, summary_index, summary_length
         else:
             self._pretrained_model_inputs = self._tokenizer("").keys()
