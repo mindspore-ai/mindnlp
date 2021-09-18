@@ -50,7 +50,7 @@ class AMADataset(PairCLSBaseDataset):
                  padding: str = '<pad>', unknown: str = '<unk>',
                  buckets: Optional[List[int]] = None, **kwargs):
         super(AMADataset, self).__init__(sep=',', name='AMA',
-                                         label_map={"1": 0, "2": 1, "3": 2, "4": 3, "5": 4}, **kwargs)
+                                         label_map={1: 0, 2: 1, 3: 2, 4: 3, 5: 4}, **kwargs)
         self._paths = paths
         self._tokenize = tokenizer
         self._lang = lang
