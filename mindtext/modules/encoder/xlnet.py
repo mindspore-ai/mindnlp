@@ -268,7 +268,7 @@ class XLNetRelativeAttention(nn.Cell):
             name='attention_seg_embed')
 
         self.layer_norm = nn.LayerNorm([self.d_model], epsilon=config.layer_norm_eps)
-        self.dropout = nn.Dropout(1-config.dropout)
+        self.dropout = nn.Dropout(1 - config.dropout)
 
     @staticmethod
     def rel_shift(x: Tensor, klen: int = -1) -> Tensor:
@@ -578,7 +578,7 @@ class XLNetFeedForward(nn.Cell):
         self.layer_norm = nn.LayerNorm([config.d_model], epsilon=config.layer_norm_eps)
         self.layer_1 = nn.Dense(config.d_model, config.d_inner)
         self.layer_2 = nn.Dense(config.d_inner, config.d_model)
-        self.dropout = nn.Dropout(1-config.dropout)
+        self.dropout = nn.Dropout(1 - config.dropout)
         if isinstance(config.ff_activation, str):
             self.activation_function = ACT2FN[config.ff_activation]
         else:
@@ -620,7 +620,7 @@ class XLNetLayer(nn.Cell):
         super(XLNetLayer, self).__init__()
         self.rel_attn = XLNetRelativeAttention(config)
         self.ff = XLNetFeedForward(config)
-        self.dropout = nn.Dropout(1-config.dropout)
+        self.dropout = nn.Dropout(1 - config.dropout)
         self.seq_len_dim = 1
 
     def construct(
@@ -701,7 +701,7 @@ class XLNetModel(nn.Cell):
         self.mask_emb = Parameter(initializer(Normal(mean=0.0, sigma=config.initializer_range), [1, 1, config.d_model]),
                                   name='mask_emb')
         self.layer = nn.CellList([XLNetLayer(config) for _ in range(config.n_layer)])
-        self.dropout = nn.Dropout(1-config.dropout)
+        self.dropout = nn.Dropout(1 - config.dropout)
         self.cast = mindspore.ops.Cast()
         self.config = config
         self.return_dict = config.return_dict
@@ -808,8 +808,8 @@ class XLNetModel(nn.Cell):
             beg, end = klen, -1
 
         if self.bi_data:
-            fwd_pos_seq = np.arange(beg, end, -1.0)
-            bwd_pos_seq = np.arange(-beg, -end, 1.0)
+            fwd_pos_seq = generate_arange_tensor(beg, end, -1.0)
+            bwd_pos_seq = generate_arange_tensor(-beg, -end, 1.0)
 
             if self.clamp_len > 0:
                 fwd_pos_seq = mindspore.ops.clip_by_value(fwd_pos_seq, -self.clamp_len, self.clamp_len)
@@ -1141,7 +1141,7 @@ class XLNetForClassification(nn.Cell):
                  loss: Optional[nn.Cell] = None) -> Tensor:
         super(XLNetForClassification, self).__init__()
         self.model = model
-        self.dropout = nn.Dropout(1-config.dropout)
+        self.dropout = nn.Dropout(1 - config.dropout)
         self.classifier = nn.Dense(config.d_model, num_class)
         if isinstance(loss, nn.Cell):
             self.loss = loss
