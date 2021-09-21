@@ -33,7 +33,7 @@ class MRPCDataset(PairCLSBaseDataset):
     MRPC dataset.
 
     Args:
-        path (str): Dataset file path or Dataset directory path.
+        paths (str): Dataset file path or Dataset directory path.
         tokenizer (Union[str]): Tokenizer function, default 'spacy'.
         lang (str): Tokenizer language, default 'en'.
         max_size (int, Optional): Vocab max size, default None.
@@ -49,12 +49,12 @@ class MRPCDataset(PairCLSBaseDataset):
         >>> ds = mrpc()
     """
 
-    def __init__(self, path: str, tokenizer: Union[str] = 'spacy', lang: str = 'en', max_size: Optional[int] = None,
+    def __init__(self, paths: str, tokenizer: Union[str] = 'spacy', lang: str = 'en', max_size: Optional[int] = None,
                  min_freq: Optional[int] = None, padding: str = '<pad>', unknown: str = '<unk>',
                  buckets: Optional[List[int]] = None,
                  train_ratio: float = 0.8, **kwargs):
         super(MRPCDataset, self).__init__(sep='\t', name='MRPC', **kwargs)
-        self._path = path
+        self._paths = paths
         self._tokenize = tokenizer
         self._lang = lang
         self._vocab_max_size = max_size
@@ -65,7 +65,7 @@ class MRPCDataset(PairCLSBaseDataset):
         self._train_ratio = train_ratio
 
     def __call__(self) -> Dict[str, ds.MindDataset]:
-        self.load(self._path)
+        self.load(self._paths)
         self.process(tokenizer=self._tokenize, lang=self._lang, max_size=self._vocab_max_size,
                      min_freq=self._vocab_min_freq, padding=self._padding,
                      unknown=self._unknown, buckets=self._buckets)

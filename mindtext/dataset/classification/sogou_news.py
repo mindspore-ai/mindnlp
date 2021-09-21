@@ -14,6 +14,7 @@
 # ============================================================================
 """SogouNewsDataset class"""
 from typing import Union, Dict, List, Optional
+from tqdm import tqdm
 import pandas as pd
 from pandas import DataFrame
 import mindspore.dataset as ds
@@ -73,7 +74,13 @@ class SogouNewsDataset(CLSBaseDataset):
                    DataFrame: Dataset file will be read as a DataFrame.
         """
         with open(path, "r", encoding='utf-8') as reader:
-            dataset = pd.read_csv(reader, sep=',', header=None)
-        dataset.columns = ['label', 'sentence1', 'sentence2']
-        print(dataset, '\n')
+            dataset = pd.read_csv(reader, sep='\n', names=['label', 'sentence'])
+
+        def index_sentence_split(row):
+            row_data = row['label'].strip().split(',')
+            return row_data[0], row_data[1] + ' ' + row_data[2]
+
+        tqdm.pandas(desc=f"{self._name} dataset loadding")
+        dataset = dataset.progress_apply(index_sentence_split, axis=1, result_type="expand")
+        dataset.columns = ['label', 'sentence']
         return dataset

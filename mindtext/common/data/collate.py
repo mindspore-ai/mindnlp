@@ -23,7 +23,7 @@ def _get_bucket_length(x, bts):
     for index in range(1, len(bts)):
         if bts[index - 1] < x_len <= bts[index]:
             return bts[index]
-    return bts[0]
+    return bts[index]
 
 
 class Pad:
@@ -37,15 +37,17 @@ class Pad:
         buckets (List[int], Optional): Padding row to the length of buckets, default None.
         pad_right (bool): The position of the PAD. If True, it indicates we
         pad to the right side, while False indicates we pad to the left side, default True.
+        truncate (bool): Whether to truncate sequence when the length is greater than the max length.
 
      """
 
     def __init__(self, max_length: int = 0, pad_val: Union[float, int] = 0, buckets: Optional[List[int]] = None,
-                 pad_right: bool = True):
+                 pad_right: bool = True, truncate: bool = False):
         self.pad_val = pad_val
         self.max_length = max_length
         self.buckets = buckets
         self.pad_right = pad_right
+        self.truncate = truncate
 
     def __call__(self, data: List[int]) -> Tuple[List[int], int]:
         """
@@ -65,10 +67,15 @@ class Pad:
         """
         if isinstance(self.buckets, List):
             self.max_length = _get_bucket_length(data, self.buckets)
-        if self.pad_right:
-            data = data + (self.max_length - len(data)) * [self.pad_val]
+        length = len(data)
+        if length <= self.max_length:
+            if self.pad_right:
+                data = data + (self.max_length - length) * [self.pad_val]
+            else:
+                data = (self.max_length - length) * [self.pad_val] + data
         else:
-            data = (self.max_length - len(data)) * [self.pad_val] + data
+            if self.truncate:
+                data = data[:self.max_length]
         return data
 
     @staticmethod

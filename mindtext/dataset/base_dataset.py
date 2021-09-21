@@ -57,6 +57,18 @@ class Dataset:
         vocab (Vocabulary, Optional): Convert tokens to index,default None.
         name (str, Optional): Dataset name,default None.
         label_map (Dict[str, int], Optional): Dataset label map,default None.
+        batch_size (int): Dataset mini batch size. Refers to `mindspore.dataset.MindDataset`.
+        repeat_dataset (int): Dataset repeat numbers. Refers to `mindspore.dataset.MindDataset`.
+        num_parallel_workers (int): The number of readers. Refers to `mindspore.dataset.MindDataset`.
+        columns_list (List[str]): The columns name of `mindspore.dataset.MindDataset` (train set).
+        test_columns_list (List[str]): The columns name of `mindspore.dataset.MindDataset` (test set).
+        truncation_strategy (Union[bool, str]): Truncation strategy used to index sequence.When not using a pretrained
+            tokenizer, it can be assigned to `True`.When using a pretrained tokenizer, it can be assigned to `True` or
+            `longest_first`, `only_first`, `only_second`, `False` or `do_not_truncate`
+            (Refers to transformers.PreTrainedTokenizerBase).
+        max_length (int): The max length of padding or truncate. Refers to transformers.PreTrainedTokenizerBase
+        max_pair_length (int): The max pair length can be assigned when second sequence need to be padded or truncated.
+            Refers to transformers.PreTrainedTokenizerBase
     """
 
     def __init__(self, vocab: Optional[Vocabulary] = None, name: Optional[str] = None,
@@ -570,9 +582,9 @@ class CLSBaseDataset(Dataset):
                     max_length = self._max_length
                 else:
                     max_length = dataset['input_length'].max()
-                pad = Pad(max_length, self._vocab.padding_idx)
+                pad = Pad(max_length, self._vocab.padding_idx, truncate=self._truncation_strategy)
             else:
-                pad = Pad(self._vocab.padding_idx, buckets=buckets)
+                pad = Pad(self._vocab.padding_idx, buckets=buckets, truncate=self._truncation_strategy)
             dataset['input_ids'] = self.padding_progress(dataset, dataset_type, field='input_ids', pad_function=pad)
             dataset['padding_length'] = self.get_length_progress(dataset, dataset_type, 'input_ids')
         else:
@@ -733,14 +745,14 @@ class PairCLSBaseDataset(Dataset):
                     max_length2 = self._max_pair_length
                 else:
                     max_length2 = dataset['input2_length'].max()
-                pad1 = Pad(max_length1, self._vocab.padding_idx)
-                pad2 = Pad(max_length2, self._vocab.padding_idx)
+                pad1 = Pad(max_length1, self._vocab.padding_idx, truncate=self._truncation_strategy)
+                pad2 = Pad(max_length2, self._vocab.padding_idx, truncate=self._truncation_strategy)
                 dataset['input1_ids'] = self.padding_progress(dataset, dataset_type, field='input1_ids',
                                                               pad_function=pad1)
                 dataset['input2_ids'] = self.padding_progress(dataset, dataset_type, field='input2_ids',
                                                               pad_function=pad2)
             else:
-                pad = Pad(self._vocab.padding_idx, buckets=buckets)
+                pad = Pad(self._vocab.padding_idx, buckets=buckets, truncate=self._truncation_strategy)
                 dataset['input1_ids'] = self.padding_progress(dataset, dataset_type, field='input1_ids',
                                                               pad_function=pad)
                 dataset['input2_ids'] = self.padding_progress(dataset, dataset_type, field='input2_ids',
