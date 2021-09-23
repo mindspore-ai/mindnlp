@@ -13,6 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """Normal decoder class."""
+import mindspore
 import mindspore.nn as nn
 
 
@@ -23,7 +24,7 @@ class NormalDecoder(nn.Cell):
     Args:
         num_filters(int): The number of filters. Default: 256.
         num_classes(int): The number of output classes.
-        classes_dropout(int): The probability of Dropout layer. Default: 0.1.
+        classes_dropout(float): The probability of Dropout layer. Default: 0.1.
 
     Returns:
         Tensor.
@@ -32,12 +33,13 @@ class NormalDecoder(nn.Cell):
 
     """
 
-    def __init__(self, num_filters, num_classes, classes_dropout):
+    def __init__(self, num_filters: int, num_classes: int, classes_dropout: float = 0.1, activation: str = 'relu'):
         super(NormalDecoder, self).__init__()
-        self.drop_out = nn.Dropout(classes_dropout)
-        self.linear = nn.Dense(num_filters, num_classes)
+        self.drop_out = nn.Dropout(keep_prob=1 - classes_dropout)
+        self.linear = nn.Dense(num_filters, num_classes, activation=activation)
 
-    def construct(self, x):
+    def construct(self, x: mindspore.Tensor) -> mindspore.Tensor:
+        """Apply NormalDecoder."""
         x = self.drop_out(x)
         x = self.linear(x)
         return x
