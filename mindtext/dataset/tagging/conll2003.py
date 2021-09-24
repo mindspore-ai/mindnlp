@@ -16,7 +16,7 @@
 import pandas as pd
 
 
-class Conll2003:
+class CONLLDataset:
     """ Usage of Dataset conll2003"""
     def __init__(self):
         """"""
@@ -34,6 +34,6 @@ class Conll2003:
 
 
 if __name__ == "__main__":
-    test = Conll2003()
+    test = CONLLDataset()
     df = test.load('train.txt')
     print(df.values[:, :])
