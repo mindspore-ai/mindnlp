@@ -20,10 +20,10 @@ from typing import Union, List, Tuple, Optional
 
 def _get_bucket_length(x, bts):
     x_len = len(x)
-    for index in range(1, len(bts)):
-        if bts[index - 1] < x_len <= bts[index]:
+    for index in range(0, len(bts)):
+        if x_len <= bts[index]:
             return bts[index]
-    return bts[index]
+    return bts[-1]
 
 
 class Pad:
