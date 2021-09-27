@@ -16,7 +16,7 @@
     MRPC dataset
 """
 import os
-from typing import Union, Dict, List, Optional
+from typing import Union, Dict, Optional
 
 import pandas as pd
 from pandas import DataFrame
@@ -51,7 +51,6 @@ class MRPCDataset(PairCLSBaseDataset):
 
     def __init__(self, paths: str, tokenizer: Union[str] = 'spacy', lang: str = 'en', max_size: Optional[int] = None,
                  min_freq: Optional[int] = None, padding: str = '<pad>', unknown: str = '<unk>',
-                 buckets: Optional[List[int]] = None,
                  train_ratio: float = 0.8, **kwargs):
         super(MRPCDataset, self).__init__(sep='\t', name='MRPC', **kwargs)
         self._paths = paths
@@ -61,7 +60,6 @@ class MRPCDataset(PairCLSBaseDataset):
         self._vocab_min_freq = min_freq
         self._padding = padding
         self._unknown = unknown
-        self._buckets = buckets
         self._train_ratio = train_ratio
 
     def __call__(self) -> Dict[str, ds.MindDataset]:
@@ -69,7 +67,7 @@ class MRPCDataset(PairCLSBaseDataset):
         self.process(tokenizer=self._tokenize, lang=self._lang, max_size=self._vocab_max_size,
                      min_freq=self._vocab_min_freq, padding=self._padding,
                      unknown=self._unknown, buckets=self._buckets)
-        return self.mind_datasets
+        return self._mind_datasets
 
     def _load(self, path: str) -> DataFrame:
         with open(path, 'r', encoding='utf-8') as f:

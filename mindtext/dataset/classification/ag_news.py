@@ -13,7 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """ AG News dataset"""
-from typing import Union, Dict, List
+from typing import Union, Dict
 import pandas as pd
 from pandas import DataFrame
 
@@ -41,8 +41,8 @@ class AgNewsDataset(CLSBaseDataset):
 
     def __init__(self, paths: Union[str, Dict[str, str]] = None, tokenizer: Union[str] = 'spacy',
                  lang: str = 'en', max_size: int = None, min_freq: int = None, padding: str = '<pad>',
-                 unknown: str = '<unk>', buckets: List[int] = None):
-        super(AgNewsDataset, self).__init__(sep=',', name='AgNews')
+                 unknown: str = '<unk>', **kwargs):
+        super(AgNewsDataset, self).__init__(sep=',', name='AgNews', **kwargs)
         self._paths = paths
         self._tokenize = tokenizer
         self._lang = lang
@@ -50,14 +50,13 @@ class AgNewsDataset(CLSBaseDataset):
         self._vocab_min_freq = min_freq
         self._padding = padding
         self._unknown = unknown
-        self._buckets = buckets
 
     def __call__(self) -> Dict[str, ds.MindDataset]:
         self.load(self._paths)
         self.process(tokenizer=self._tokenize, lang=self._lang, max_size=self._vocab_max_size,
                      min_freq=self._vocab_min_freq, padding=self._padding,
                      unknown=self._unknown, buckets=self._buckets)
-        return self.mind_datasets
+        return self._mind_datasets
 
     def _load(self, path: str) -> DataFrame:
         """
