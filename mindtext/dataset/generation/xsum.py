@@ -306,7 +306,7 @@ class XSUMDataset(Dataset):
             pd_dataset = pd.DataFrame(columns=self._datasets[i].column_names)
             for j in self._datasets[i].column_names:
                 pd_dataset[j] = pd.Series(self._datasets[i][j])
-            dict_dataset[i] = pd_dataset[:5000]
+            dict_dataset[i] = pd_dataset
         self._datasets = dict_dataset
         return self._datasets
 
