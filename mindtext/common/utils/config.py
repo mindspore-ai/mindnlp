@@ -15,6 +15,7 @@
 """ Config dict parse module """
 
 import os
+import argparse
 from argparse import Action
 
 import yaml
@@ -291,3 +292,20 @@ class ActionDict(Action):
             key, value = key_value.split('=', maxsplit=1)
             options[key] = self._parse_value_iter(value)
         setattr(namespace, self.dest, options)
+
+
+def parse_args():
+    """
+    Parse arguments from `yaml` config file.
+
+    Returns:
+        object: argparse object.
+    """
+    parser = argparse.ArgumentParser("MindVison classification script.")
+    parser.add_argument('-c',
+                        '--config',
+                        type=str,
+                        default="",
+                        help='Enter the path of the model config file.')
+
+    return parser.parse_args()
