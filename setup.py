@@ -89,8 +89,8 @@ def get_description():
     stdout, _ = process.communicate()
     if not process.returncode:
         git_version = stdout.decode().strip()
-        return "An open source computer vision research tool box. Git version: %s" % (git_version)
-    return "An open source computer vision research tool box."
+        return "An open source natural language processing research tool box. Git version: %s" % (git_version)
+    return "An open source natural language processing research tool box."
 
 
 class EggInfo(egg_info):
