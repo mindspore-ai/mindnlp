@@ -29,7 +29,7 @@ If you find this project useful in your research, please consider citing:
 
 ```latex
 @misc{mindvsion2021,
-    title={{MindText}:MindSpore Vision Toolbox and Benchmark},
+    title={{MindText}:MindSpore text Toolbox and Benchmark},
     author={MindText Contributors},
     howpublished = {\url{https://gitee.com/mindspore/mindtext}},
     year={2021}
