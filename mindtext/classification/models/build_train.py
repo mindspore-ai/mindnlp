@@ -24,12 +24,15 @@ from sklearn.metrics import accuracy_score
 import numpy as np
 
 from .backbones.fasttext import FastText, FastTextTrainOneStep, FastTextInferCell
+from .dpcnn import DPCNNTrainOneStep, DPCNNInferCell
 from .classifiers import BaseClassifier
 
-MODEL_LIST = {'FastText': (FastTextTrainOneStep, FastTextInferCell)}
+MODEL_LIST = {'FastText': (FastTextTrainOneStep, FastTextInferCell),
+              'DPCNN': (DPCNNTrainOneStep, DPCNNInferCell)}
 
 
 class Model:
+    """Model class."""
     def __init__(self, net, loss=None, optimizer=None, metrics=None):
         self.net = net
         self.loss = loss
@@ -37,16 +40,17 @@ class Model:
         self.metrics = metrics
         if net.backbone.__class__.__name__ not in MODEL_LIST.keys():
             raise ValueError("model not found in {}".format(MODEL_LIST.keys()))
-        self.MODEL_TRAIN, self.MODEL_INFER = MODEL_LIST[net.backbone.__class__.__name__]
-        self.Infer_Model = self.MODEL_INFER(self.net)
+        self.model_train, self.model_infer = MODEL_LIST[net.backbone.__class__.__name__]
+        self.infer_model = self.model_infer(self.net)
 
     def train(self, epoch, train_dataset, callbacks, dataset_sink_mode=False):
-        train_one_step = self.MODEL_TRAIN(self.net, self.loss, self.optimizer)
+        train_one_step = self.model_train(self.net, self.loss, self.optimizer)
         train_one_step.set_train(True)
-        Train_Model = MM(train_one_step)
-        Train_Model.train(epoch, train_dataset, callbacks, dataset_sink_mode)
+        train_model = MM(train_one_step)
+        train_model.train(epoch, train_dataset, callbacks, dataset_sink_mode)
 
     def eval(self, dataset):
+        """Model evaluation."""
         predictions = []
         target_sens = []
         inputs = {}
@@ -54,13 +58,13 @@ class Model:
         label_name = None
         for batch in tqdm(dataset.create_dict_iterator(output_numpy=True, num_epochs=1),
                           total=dataset.get_dataset_size()):
-            if len(inputs_name) == 0:
+            if inputs_name:
                 inputs_name = list(batch.keys())[0:-1]
                 label_name = list(batch.keys())[-1]
             target_sens.append(batch[label_name])
             for i in inputs_name:
                 inputs[i] = Tensor(batch[i], mstype.int32)
-            predicted_idx = self.Infer_Model(**inputs)
+            predicted_idx = self.infer_model(**inputs)
             predictions.append(predicted_idx.asnumpy())
             inputs = {}
         target_sens = np.array(target_sens).flatten()
