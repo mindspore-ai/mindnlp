@@ -15,3 +15,4 @@
 """
 tagging init
 """
+from .conll2003 import CONLLDataset
