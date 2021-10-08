@@ -63,7 +63,7 @@ class IflytekDataset(CLSBaseDataset):
         self.process(tokenizer=self._tokenize, lang=self._lang,
                      max_size=self._vocab_max_size, min_freq=self._vocab_min_freq,
                      padding=self._padding, unknown=self._unknown, buckets=self._buckets)
-        return self.mind_datasets
+        return self._mind_datasets
 
     def _load(self, path: str) -> DataFrame:
         """

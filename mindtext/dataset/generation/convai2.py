@@ -13,7 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """
-    XSUM class
+    Convai2 dataset
 """
 from typing import Union, List, Dict, Optional
 
@@ -258,7 +258,7 @@ class Convai2Dataset(Dataset):
                 return model_inputs
         return token_to_idx
 
-    def _write_to_mr(self, dataset: DataFrame, file_path: Union[str, Dict[int, str]], is_test: bool,
+    def _write_to_mr(self, dataset: DataFrame, file_path: Union[str, Dict[int, str]],
                      process_function: callable = None) -> List[str]:
         """
         Write CLSDataset to .mindrecord file.
@@ -266,7 +266,6 @@ class Convai2Dataset(Dataset):
         Args:
             dataset (DataFrame): Tokenizer function.
             file_path (Union[str, Dict[int, str]]): Path of mindrecord file.
-            is_test (bool): Whether the data set is a test set.
             process_function (callable): A function is used to preprocess data.
 
         Returns:
@@ -288,12 +287,23 @@ class Convai2Dataset(Dataset):
             for i in self._pretrained_model_inputs:
                 data_schema[i] = {'type': 'int32', 'shape': [-1]}
 
-        if not is_test:
-            if not isinstance(self._tokenizer, PreTrainedTokenizerBase):
-                data_schema["output_ids"] = {"type": "int32", "shape": [-1]}
-                data_schema["output_length"] = {"type": "int32", "shape": [-1]}
-            else:
-                data_schema["labels"] = {"type": "int32", "shape": [-1]}
+        if callable(process_function):
+            colmun_names = dataset.iterrows()
+            i, row = next(colmun_names)
+            row = process_function(row)
+            if ("labels" in row.keys()) or ("output_ids" in row.keys()):
+                if not isinstance(self._tokenizer, PreTrainedTokenizerBase):
+                    data_schema["output_ids"] = {"type": "int32", "shape": [-1]}
+                    data_schema["output_length"] = {"type": "int32", "shape": [-1]}
+                else:
+                    data_schema["labels"] = {"type": "int32", "shape": [-1]}
+        else:
+            if ("labels" in dataset.columns.values) or ("output_ids" in dataset.columns.values):
+                if not isinstance(self._tokenizer, PreTrainedTokenizerBase):
+                    data_schema["output_ids"] = {"type": "int32", "shape": [-1]}
+                    data_schema["output_length"] = {"type": "int32", "shape": [-1]}
+                else:
+                    data_schema["labels"] = {"type": "int32", "shape": [-1]}
 
         if isinstance(writer, Dict):
             for k in file_path.keys():
@@ -315,12 +325,21 @@ class Convai2Dataset(Dataset):
                 for i in self._pretrained_model_inputs:
                     sample[i] = np.array(row[i], dtype=np.int64)
 
-            if not is_test:
-                if not isinstance(self._tokenizer, PreTrainedTokenizerBase):
-                    sample['output_ids'] = np.array(row["output_ids"], dtype=np.int64)
-                    sample['output_length'] = np.array(row["output_length"], dtype=np.int64)
-                else:
-                    sample['labels'] = np.array(row['labels'], dtype=np.int64)
+            if callable(process_function):
+                if ("labels" in row.keys()) or ("output_ids" in row.keys()):
+                    if not isinstance(self._tokenizer, PreTrainedTokenizerBase):
+                        sample['output_ids'] = np.array(row["output_ids"], dtype=np.int64)
+                        sample['output_length'] = np.array(row["output_length"], dtype=np.int64)
+                    else:
+                        sample['labels'] = np.array(row['labels'], dtype=np.int64)
+            else:
+                if ("labels" in dataset.columns.values) or ("output_ids" in dataset.columns.values):
+                    if not isinstance(self._tokenizer, PreTrainedTokenizerBase):
+                        sample['output_ids'] = np.array(row["output_ids"], dtype=np.int64)
+                        sample['output_length'] = np.array(row["output_length"], dtype=np.int64)
+                    else:
+                        sample['labels'] = np.array(row['labels'], dtype=np.int64)
+
             if not isinstance(writer, Dict):
                 data.append(sample)
                 if index % 10 == 0:
