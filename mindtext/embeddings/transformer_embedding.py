@@ -53,7 +53,15 @@ class EmbeddingLookup(nn.Cell):
         self.array_mul = P.MatMul()
 
     def construct(self, input_ids: mindspore.Tensor) -> (mindspore.Tensor, mindspore.Tensor):
-        """Get a embeddings lookup table with a fixed dictionary and size."""
+        """
+        Get a embeddings lookup table with a fixed dictionary and size.
+
+        Args:
+            input_ids (Tensor): The id tokens of input sequence.
+
+        Returns:
+            output (Tuple[Tensor, Tensor]): The word embedding and the embedding lookup table of input sequence.
+        """
         input_shape = input_ids.shape
 
         flat_ids = input_ids.reshape(self.shape_flat)
@@ -72,7 +80,7 @@ class EmbeddingLookup(nn.Cell):
 def position_encoding(length: int,
                       hidden_size: int,
                       min_timescale: int = 1,
-                      max_timescale: int = 1e4) -> mindspore.Tensor:
+                      max_timescale: float = 1e4) -> mindspore.Tensor:
     """
     Create Tensor of sinusoids of different frequencies.
 
@@ -120,7 +128,15 @@ class EmbeddingPostprocessor(nn.Cell):
                                                          mstype.float32)
 
     def construct(self, word_embeddings: mindspore.Tensor) -> mindspore.Tensor:
-        """Postprocessors apply positional embeddings to word embeddings."""
+        """
+        Postprocessors apply positional embeddings to word embeddings.
+
+        Args:
+            word_embeddings (Tensor): The word_embedding of input sequence.
+
+        Returns:
+            output (Tensor): The result of add position embeddings to word embeddings.
+        """
         input_shape = word_embeddings.shape
         input_len = input_shape[1]
 

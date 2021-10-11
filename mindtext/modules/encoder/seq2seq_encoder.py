@@ -14,11 +14,10 @@
 # ============================================================================
 """Seq2seq encoder class."""
 
-from typing import Optional
-
 import mindspore
 from mindspore.common import dtype as mstype
 from mindspore import nn
+from mindspore.ops import operations as P
 from mindspore.common.initializer import initializer as init
 from mindspore.common.initializer import XavierUniform as xavUniform
 from .attention import LayerPreprocess, LayerPostprocess, SelfAttention
@@ -40,6 +39,7 @@ class FeedForward(nn.Cell):
         hidden_dropout_prob (float): The dropout probability for hidden outputs. Default: 0.1.
         compute_type (:class:`mindspore.dtype`): Compute type in FeedForward. Default: mstype.float32.
     """
+
     def __init__(self,
                  in_channels: int,
                  hidden_size: int,
@@ -60,21 +60,29 @@ class FeedForward(nn.Cell):
         self.preprocess = LayerPreprocess(in_channels=in_channels)
         self.postprocess = LayerPostprocess(dropout_prob=hidden_dropout_prob)
 
+        self.reshape = P.Reshape()
         self.shape = (-1, in_channels)
         self.dropout = nn.Dropout(1 - hidden_dropout_prob)
         self.use_dropout = hidden_dropout_prob > 0
 
     def construct(self, input_tensor: mindspore.Tensor) -> mindspore.Tensor:
-        """Apply FeedForward."""
-        input_shape = input_tensor.shape
-        input_tensor = input_tensor.reshape(self.shape)
+        """
+        Apply FeedForward.
+
+        Args:
+            input_tensor (Tensor): The input tensor for FeedForward Network.
+
+        Returns:
+            output (Tensor): The output tensor of FeedForward Network.
+        """
+        input_tensor = self.reshape(input_tensor, self.shape)
         output = self.preprocess(input_tensor)
         output = self.conv1(output)
         if self.use_dropout:
             output = self.dropout(output)
         output = self.conv2(output)
         output = self.postprocess(output, input_tensor)
-        return output.reshape(input_shape)
+        return output
 
 
 class EncoderCell(nn.Cell):
@@ -84,23 +92,25 @@ class EncoderCell(nn.Cell):
     Args:
         batch_size (int): Batch size of input dataset.
         hidden_size (int): Size of the encoder layers. Default: 1024.
-        num_heads (int): Number of attention heads. Default: 16.
+        num_attention_heads (int): Number of attention heads. Default: 16.
         intermediate_size (int): Size of intermediate layer. Default: 4096.
-        attn_dropout_prob (float): The dropout probability for self-attention. Default: 0.1.
+        attention_probs_dropout_prob (float): The dropout probability for
+                                      SelfAttention. Default: 0.02.
         use_one_hot_embeddings (bool): Specifies whether to use one hot encoding form. Default: False.
-        has_key_padding_mask (bool): Specifies whether to use key padding mask. Default: False.
+        initializer_range (float): Initialization value of TruncatedNormal. Default: 0.1.
         hidden_dropout_prob (float): The dropout probability for hidden outputs. Default: 0.1.
         hidden_act (str): Activation function. Default: "relu".
-        compute_type (class:'mindspore.dtype'): Compute type in attention. Default: mstype.float32.
+        compute_type (class:`mindspore.dtype`): Compute type in attention. Default: mstype.float32.
     """
+
     def __init__(self,
                  batch_size: int,
                  hidden_size: int = 1024,
-                 num_heads: int = 16,
+                 num_attention_heads: int = 16,
                  intermediate_size: int = 4096,
-                 attn_dropout_prob: float = 0.1,
+                 attention_probs_dropout_prob: float = 0.1,
                  use_one_hot_embeddings: bool = False,
-                 has_key_padding_mask: bool = False,
+                 initializer_range: float = 0.02,
                  hidden_dropout_prob: float = 0.1,
                  hidden_act: str = "relu",
                  compute_type: mindspore.dtype = mstype.float32):
@@ -108,12 +118,12 @@ class EncoderCell(nn.Cell):
         self.attention = SelfAttention(
             batch_size=batch_size,
             hidden_size=hidden_size,
-            num_heads=num_heads,
-            attn_dropout_prob=attn_dropout_prob,
+            num_attention_heads=num_attention_heads,
+            attention_probs_dropout_prob=attention_probs_dropout_prob,
             use_one_hot_embeddings=use_one_hot_embeddings,
-            has_key_padding_mask=has_key_padding_mask,
+            initializer_range=initializer_range,
             hidden_dropout_prob=hidden_dropout_prob,
-            is_encdec_attn=False,
+            is_encdec_att=False,
             compute_type=compute_type)
         self.feedforward = FeedForward(
             in_channels=hidden_size,
@@ -123,27 +133,24 @@ class EncoderCell(nn.Cell):
             hidden_dropout_prob=hidden_dropout_prob,
             compute_type=compute_type)
 
-    def construct(self, hidden_states: mindspore.Tensor, attn_mask: mindspore.Tensor,
-                  key_padding_mask: Optional[mindspore.Tensor] = None) -> mindspore.Tensor:
+    def construct(self, hidden_states: mindspore.Tensor, attention_mask: mindspore.Tensor,
+                  seq_length: int) -> mindspore.Tensor:
         """
         Apply EncoderCell.
 
         Args:
             hidden_states (Tensor): The shape is (batch_size, seq_len, hidden_size). Hidden states of encoder layer.
-            attn_mask (Tensor): The shape is (seq_len, seq_len) or (batch_size, seq_len, seq_len). The mask matrix(2D
-                                or 3D) for self-attention, the values should be [0/1] or [True/False].
-            key_padding_mask (Tensor): The shape is (batch_size, from_seq_len). Used to indicate which positions of
-                                        from_tensor are padding, and these padding positions will be ignored during
-                                        attention calculation. The values should be [0/1] or [True/False].
-                                        Default: None.
+            attention_mask (Tensor): The shape is (seq_len, seq_len) or (batch_size, seq_len, seq_len). The mask matrix
+                                    (2D or 3D) for self-attention, the values should be [0/1] or [True/False].
+            seq_length (int): The length of input sequence (`hidden_states`).
 
         return:
             output (Tensor): The output of EncoderCell.
         """
-        # Self-attention with layerNorm, residual.
-        attn_output = self.attention(hidden_states, hidden_states, attn_mask, key_padding_mask)
-        # Feed forward with layerNorm, residual.
-        output = self.feedforward(attn_output)
+        # self-attention with ln, res
+        attention_output = self.attention(hidden_states, hidden_states, attention_mask, seq_length, seq_length)
+        # feed forward with ln, res
+        output = self.feedforward(attention_output)
         return output
 
 
@@ -154,45 +161,41 @@ class TransformerEncoder(nn.Cell):
     Args:
         batch_size (int): Batch size of input dataset.
         hidden_size (int): Size of the encoder layers.
-        seq_len (int): The length of input sequence.
-        num_layers (int): Number of layers(encoder cells) in Transformer Encoder.
-        num_heads (int): Number of attention heads in encoder cells. Default: 16.
+        num_hidden_layers (int): Number of hidden layers in encoder cells.
+        num_attention_heads (int): Number of attention heads in encoder cells. Default: 16.
         intermediate_size (int): Size of intermediate layer in encoder cells. Default: 4096.
-        attn_dropout_prob (float): The dropout probability for self-attention. Default: 0.1.
-        use_one_hot_embeddings (bool): Specifies whether to use one hot encoding form. Default: False.
-        has_key_padding_mask (bool): Specifies whether to use key padding mask. Default: False.
+        attention_probs_dropout_prob (float): The dropout probability for
+                                      SelfAttention. Default: 0.1.
+        initializer_range (float): Initialization value of TruncatedNormal. Default: 0.02.
         hidden_dropout_prob (float): The dropout probability for hidden outputs. Default: 0.1..
         hidden_act (str): Activation function used in the encoder cells. Default: "gelu".
         compute_type (:class:`mindspore.dtype`): Compute type. Default: mstype.float32.
     """
+
     def __init__(self,
                  batch_size: int,
                  hidden_size: int,
-                 seq_len: int,
-                 num_layers: int,
-                 num_heads: int = 16,
+                 num_hidden_layers: int,
+                 num_attention_heads: int = 16,
                  intermediate_size: int = 4096,
-                 attn_dropout_prob: float = 0.1,
-                 use_one_hot_embeddings: bool = False,
-                 has_key_padding_mask: bool = False,
+                 attention_probs_dropout_prob: float = 0.1,
+                 initializer_range: float = 0.02,
                  hidden_dropout_prob: float = 0.1,
-                 hidden_act: str = "gelu",
+                 hidden_act: str = "relu",
                  compute_type: mindspore.dtype = mstype.float32):
         super(TransformerEncoder, self).__init__()
-        self.num_hidden_layers = num_layers
+        self.num_hidden_layers = num_hidden_layers
         self.batch_size = batch_size
         self.hidden_size = hidden_size
-        self.seq_len = seq_len
 
         layers = []
-        for _ in range(num_layers):
+        for _ in range(num_hidden_layers):
             layer = EncoderCell(batch_size=batch_size,
                                 hidden_size=hidden_size,
-                                num_heads=num_heads,
+                                num_attention_heads=num_attention_heads,
                                 intermediate_size=intermediate_size,
-                                attn_dropout_prob=attn_dropout_prob,
-                                use_one_hot_embeddings=use_one_hot_embeddings,
-                                has_key_padding_mask=has_key_padding_mask,
+                                attention_probs_dropout_prob=attention_probs_dropout_prob,
+                                initializer_range=initializer_range,
                                 hidden_dropout_prob=hidden_dropout_prob,
                                 hidden_act=hidden_act,
                                 compute_type=compute_type)
@@ -201,34 +204,31 @@ class TransformerEncoder(nn.Cell):
 
         self.layer_preprocess = LayerPreprocess(in_channels=hidden_size)
 
+        self.reshape = P.Reshape()
         self.shape = (-1, hidden_size)
 
-    def construct(self, input_tensor: mindspore.Tensor, attn_mask: mindspore.Tensor,
-                  key_padding_mask: Optional[mindspore.Tensor] = None) -> mindspore.Tensor:
+    def construct(self, input_tensor: mindspore.Tensor, attention_mask: mindspore.Tensor,
+                  seq_length: int) -> mindspore.Tensor:
         """
         Apply encoder.
 
         Args:
             input_tensor (Tensor): The shape is (batch_size, seq_len, hidden_size). The input sequence tensor of
                                 Transformer Encoder.
-            attn_mask (Tensor): The shape is (seq_len, seq_len) or (batch_size, seq_len, seq_len). The mask matrix(2D
-                                or 3D) for self-attention, the values should be [0/1] or [True/False].
-            key_padding_mask (Tensor): The shape is (batch_size, from_seq_len). Used to indicate which positions of
-                                        from_tensor are padding, and these padding positions will be ignored during
-                                        attention calculation. The values should be [0/1] or [True/False].
-                                        Default: None.
+            attention_mask (Tensor): The shape is (seq_len, seq_len) or (batch_size, seq_len, seq_len). The mask matrix
+                                    (2D or 3D) for self-attention, the values should be [0/1] or [True/False].
+            seq_length (int): The length of input sequence.
 
         return:
             output (Tensor): The output of Transformer Encoder.
         """
-        out_shape = (self.batch_size, self.seq_len, self.hidden_size)
-        prev_output = input_tensor
+        out_shape = (self.batch_size, seq_length, self.hidden_size)
+        prev_output = self.reshape(input_tensor, self.shape)
 
         for layer_module in self.layers:
-            layer_output = layer_module(prev_output, attn_mask, key_padding_mask)
+            layer_output = layer_module(prev_output, attention_mask, seq_length)
             prev_output = layer_output
 
-        prev_output = prev_output.reshape(self.shape)
         prev_output = self.layer_preprocess(prev_output)
-        output = prev_output.reshape(out_shape)
+        output = self.reshape(prev_output, out_shape)
         return output
