@@ -45,7 +45,8 @@ class YelpFullDataset(CLSBaseDataset):
     def __init__(self, paths: Optional[Union[str, Dict[str, str]]] = None, tokenizer: Union[str] = 'spacy',
                  lang: str = 'en', max_size: Optional[int] = None, min_freq: Optional[int] = None,
                  padding: str = '<pad>', unknown: str = '<unk>', **kwargs):
-        super(YelpFullDataset, self).__init__(sep=',', name='Yelp-Full', **kwargs)
+        super(YelpFullDataset, self).__init__(sep=',', name='Yelp-Full',
+                                              label_map={"5": 4, "4": 3, "3": 2, "2": 1, "1": 0}, **kwargs)
         self._paths = paths
         self._tokenize = tokenizer
         self._lang = lang
@@ -102,7 +103,7 @@ class YelpPolarityDataset(CLSBaseDataset):
     def __init__(self, paths: Optional[Union[str, Dict[str, str]]] = None, tokenizer: Union[str] = 'spacy',
                  lang: str = 'en', max_size: Optional[int] = None, min_freq: Optional[int] = None,
                  padding: str = '<pad>', unknown: str = '<unk>', buckets: Optional[List[int]] = None, **kwargs):
-        super(YelpPolarityDataset, self).__init__(sep=',', name='Yelp-Polarity', **kwargs)
+        super(YelpPolarityDataset, self).__init__(sep=',', name='Yelp-Polarity', label_map={"2": 1, "1": 0}, **kwargs)
         self._paths = paths
         self._tokenize = tokenizer
         self._lang = lang

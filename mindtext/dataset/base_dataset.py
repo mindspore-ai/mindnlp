@@ -69,6 +69,9 @@ class Dataset:
         max_pair_length (int): The max pair length can be assigned when second sequence need to be padded or truncated.
             Refers to transformers.PreTrainedTokenizerBase
         stream (callable): Whether to convert dataset to MindRecord file by data stream.
+        process4transformer (bool): Preprocess data for transformer model.
+        vocab_file (str): Vocabulary file path. It's used to initialize a `Vocabulary` class when `process4transformer`
+            is `True`.
     """
 
     def __init__(self, vocab: Optional[Vocabulary] = None, name: Optional[str] = None,
@@ -89,6 +92,8 @@ class Dataset:
         self._max_length = kwargs.pop("max_length", None)
         self._max_pair_length = kwargs.pop("max_pair_length", None)
         self._stream = kwargs.pop("stream", False)
+        self._process4transformer = kwargs.pop("process4transformer", False)
+        self._vocab_file = kwargs.pop("vocab_file", None)
         if isinstance(self._max_pair_length, int) and isinstance(self, CLSBaseDataset):
             raise TypeError("`CLSBaseDataset` do not need `max_pair_length`.")
         if (isinstance(self._max_length, int) or isinstance(self._max_pair_length, int)) and isinstance(self._buckets,
@@ -267,25 +272,27 @@ class Dataset:
         self._buckets = kwargs.pop("buckets", self._buckets)
         if isinstance(tokenizer, str):
             self._tokenizer = get_tokenizer(tokenizer, lang=lang)
-            if isinstance(self, (CLSBaseDataset, PairCLSBaseDataset)):
-                if isinstance(self._tokenizer, PreTrainedTokenizerBase) and isinstance(self._max_pair_length, int):
-                    raise TypeError("`max_pair_length` cannot be assigned when use a pretrained tokenizer.")
-            dataset_file_name = _preprocess_sequentially(list(self._datasets.keys()))
+        else:
+            self._tokenizer = None
+        if isinstance(self, (CLSBaseDataset, PairCLSBaseDataset)):
+            if isinstance(self._tokenizer, PreTrainedTokenizerBase) and isinstance(self._max_pair_length, int):
+                raise TypeError("`max_pair_length` cannot be assigned when use a pretrained tokenizer.")
+        dataset_file_name = _preprocess_sequentially(list(self._datasets.keys()))
 
-            for dataset_name in dataset_file_name:
-                dataset = self._datasets.get(dataset_name)
-                d_t = _get_dataset_type(dataset_name)
-                if isinstance(dataset, DataFrame):
-                    if self._stream:
-                        preprocess_func = self._stream_process(dataset, max_size, min_freq, padding, unknown,
-                                                               dataset_type=d_t)
-                        dataset = self.convert_to_mr(dataset, dataset_name, is_test=d_t == "test",
-                                                     process_function=preprocess_func)
-                    else:
-                        dataset = self._process(dataset, max_size, min_freq, padding, unknown, dataset_type=d_t)
-                        dataset = self.convert_to_mr(dataset, dataset_name, is_test=d_t == "test")
-                    self._mind_datasets[dataset_name] = dataset
-            del self._datasets
+        for dataset_name in dataset_file_name:
+            dataset = self._datasets.get(dataset_name)
+            d_t = _get_dataset_type(dataset_name)
+            if isinstance(dataset, DataFrame):
+                if self._stream:
+                    preprocess_func = self._stream_process(dataset, max_size, min_freq, padding, unknown,
+                                                           dataset_type=d_t)
+                    dataset = self.convert_to_mr(dataset, dataset_name, is_test=d_t == "test",
+                                                 process_function=preprocess_func)
+                else:
+                    dataset = self._process(dataset, max_size, min_freq, padding, unknown, dataset_type=d_t)
+                    dataset = self.convert_to_mr(dataset, dataset_name, is_test=d_t == "test")
+                self._mind_datasets[dataset_name] = dataset
+        del self._datasets
         return self._mind_datasets
 
     def convert_to_mr(self, dataset: DataFrame, file_name: str, is_test: bool,
@@ -661,6 +668,9 @@ class CLSBaseDataset(Dataset):
         Returns:
             callable: A preprocess function.
         """
+        if "label" in dataset.columns.values:
+            if isinstance(self._label_map, Dict):
+                dataset["label"] = dataset["label"].map(self.label_to_idx)
         if not isinstance(self._tokenizer, PreTrainedTokenizerBase):
             dataset["sentence"] = self.tokenize_progress(dataset, dataset_type, "sentence")
 
@@ -719,6 +729,9 @@ class CLSBaseDataset(Dataset):
         Returns:
             DataFrame: Preprocessed dataset.
         """
+        if "label" in dataset.columns.values:
+            if isinstance(self._label_map, Dict):
+                dataset["label"] = dataset["label"].map(self.label_to_idx)
         # Whether using a pretrained model tokenizer.
         if not isinstance(self._tokenizer, PreTrainedTokenizerBase):
             dataset["sentence"] = self.tokenize_progress(dataset, dataset_type, "sentence")
@@ -913,6 +926,7 @@ class PairCLSBaseDataset(Dataset):
         if "label" in dataset.columns.values:
             if not self._label_is_float and isinstance(self._label_map, Dict):
                 dataset["label"] = dataset["label"].map(self.label_to_idx)
+        # Whether using a pretrained model tokenizer.
         if not isinstance(self._tokenizer, PreTrainedTokenizerBase):
             dataset["sentence1"] = self.tokenize_progress(dataset, dataset_type, "sentence1")
             dataset["sentence2"] = self.tokenize_progress(dataset, dataset_type, "sentence2")
@@ -992,10 +1006,10 @@ class PairCLSBaseDataset(Dataset):
         Returns:
            DataFrame: Preprocessed dataset.
        """
-        # Whether using a pretrained model tokenizer.
         if "label" in dataset.columns.values:
             if not self._label_is_float and isinstance(self._label_map, Dict):
                 dataset["label"] = dataset["label"].map(self.label_to_idx)
+        # Whether using a pretrained model tokenizer.
         if not isinstance(self._tokenizer, PreTrainedTokenizerBase):
             dataset["sentence1"] = self.tokenize_progress(dataset, dataset_type, "sentence1")
             dataset["sentence2"] = self.tokenize_progress(dataset, dataset_type, "sentence2")
@@ -1065,7 +1079,7 @@ class PairCLSBaseDataset(Dataset):
     def _write_to_mr(self, dataset: DataFrame, file_path: Union[str, Dict[int, str]],
                      process_function: callable = None) -> List[str]:
         """
-        Write CLSDataset to .mindrecord file.
+        Write PairCLSDataset to .mindrecord file.
 
         Args:
             dataset (DataFrame): Tokenizer function.
@@ -1191,6 +1205,16 @@ class GenerateBaseDataset(Dataset):
 
     def __init__(self, **kwargs):
         super(GenerateBaseDataset, self).__init__(**kwargs)
+        if self._stream:
+            if (not isinstance(self._max_length, int) or not isinstance(self._max_pair_length, int)) and not isinstance(
+                    self._buckets, List):
+                raise TypeError(
+                    "`max_length`, `max_pair_length` or `buckets` should be assigned when `stream` is `True`.")
+        if bool(self._truncation_strategy) and not (
+                isinstance(self._max_length, int) or isinstance(self._max_pair_length, int)) and not isinstance(
+                    self._buckets, List):
+            raise TypeError(
+                "`truncation_strategy` need be `False` when `max_length` or `max_pair_length` is not assigned.")
 
     def _stream_process(self, dataset: DataFrame, max_size: int, min_freq: int, padding: str, unknown: str,
                         dataset_type: str) -> callable:
@@ -1412,7 +1436,7 @@ class GenerateBaseDataset(Dataset):
     def _write_to_mr(self, dataset: DataFrame, file_path: Union[str, Dict[int, str]],
                      process_function: callable = None) -> List[str]:
         """
-        Write CLSDataset to .mindrecord file.
+        Write GenerateBaseDataset to .mindrecord file.
 
         Args:
             dataset (DataFrame): Tokenizer function.
@@ -1429,25 +1453,34 @@ class GenerateBaseDataset(Dataset):
         else:
             writer = FileWriter(file_name=file_path, shard_num=1)
         # Whether using a pretrained model tokenizer.
-        if not isinstance(self._tokenizer, PreTrainedTokenizerBase):
-            data_schema = {
-                'input_ids': {'type': 'int32', 'shape': [-1]},
-                'input_length': {'type': 'int32', 'shape': [-1]}}
+        if not self._process4transformer:
+            if not isinstance(self._tokenizer, PreTrainedTokenizerBase):
+                data_schema = {
+                    'input_ids': {'type': 'int32', 'shape': [-1]},
+                    'input_length': {'type': 'int32', 'shape': [-1]}}
+            else:
+                data_schema = {}
+                for i in self._pretrained_model_inputs:
+                    data_schema[i] = {'type': 'int32', 'shape': [-1]}
         else:
             data_schema = {}
-            for i in self._pretrained_model_inputs:
-                data_schema[i] = {'type': 'int32', 'shape': [-1]}
 
         if callable(process_function):
             colmun_names = dataset.iterrows()
             i, row = next(colmun_names)
             row = process_function(row)
-            if ("labels" in row.keys()) or ("output_ids" in row.keys()):
-                if not isinstance(self._tokenizer, PreTrainedTokenizerBase):
-                    data_schema["output_ids"] = {"type": "int32", "shape": [-1]}
-                    data_schema["output_length"] = {"type": "int32", "shape": [-1]}
-                else:
-                    data_schema["labels"] = {"type": "int32", "shape": [-1]}
+            if self._process4transformer:
+                for field in row.keys():
+                    data_schema[field] = {"type": "int64", "shape": [-1]}
+                if isinstance(self._buckets, List):
+                    del data_schema['padding_length']
+            else:
+                if ("labels" in row.keys()) or ("output_ids" in row.keys()):
+                    if not isinstance(self._tokenizer, PreTrainedTokenizerBase):
+                        data_schema["output_ids"] = {"type": "int32", "shape": [-1]}
+                        data_schema["output_length"] = {"type": "int32", "shape": [-1]}
+                    else:
+                        data_schema["labels"] = {"type": "int32", "shape": [-1]}
         else:
             if ("labels" in dataset.columns.values) or ("output_ids" in dataset.columns.values):
                 if not isinstance(self._tokenizer, PreTrainedTokenizerBase):
@@ -1468,21 +1501,29 @@ class GenerateBaseDataset(Dataset):
             # Whether using a pretrained model tokenizer.
             if callable(process_function):
                 row = process_function(row)
-            if not isinstance(self._tokenizer, PreTrainedTokenizerBase):
-                sample = {'input_ids': np.array(row["input_ids"], dtype=np.int64),
-                          'input_length': np.array(row["input_length"], dtype=np.int64)}
+            if not self._process4transformer:
+                if not isinstance(self._tokenizer, PreTrainedTokenizerBase):
+                    sample = {'input_ids': np.array(row["input_ids"], dtype=np.int64),
+                              'input_length': np.array(row["input_length"], dtype=np.int64)}
+                else:
+                    sample = {}
+                    for i in self._pretrained_model_inputs:
+                        sample[i] = np.array(row[i], dtype=np.int64)
             else:
                 sample = {}
-                for i in self._pretrained_model_inputs:
-                    sample[i] = np.array(row[i], dtype=np.int64)
 
             if callable(process_function):
-                if ("labels" in row.keys()) or ("output_ids" in row.keys()):
-                    if not isinstance(self._tokenizer, PreTrainedTokenizerBase):
-                        sample['output_ids'] = np.array(row["output_ids"], dtype=np.int64)
-                        sample['output_length'] = np.array(row["output_length"], dtype=np.int64)
-                    else:
-                        sample['labels'] = np.array(row['labels'], dtype=np.int64)
+                if self._process4transformer:
+                    for field, _ in data_schema.items():
+                        sample[field] = np.array(row[field], dtype=np.int64)
+
+                else:
+                    if ("labels" in row.keys()) or ("output_ids" in row.keys()):
+                        if not isinstance(self._tokenizer, PreTrainedTokenizerBase):
+                            sample['output_ids'] = np.array(row["output_ids"], dtype=np.int64)
+                            sample['output_length'] = np.array(row["output_length"], dtype=np.int64)
+                        else:
+                            sample['labels'] = np.array(row['labels'], dtype=np.int64)
             else:
                 if ("labels" in dataset.columns.values) or ("output_ids" in dataset.columns.values):
                     if not isinstance(self._tokenizer, PreTrainedTokenizerBase):

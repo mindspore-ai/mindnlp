@@ -366,7 +366,12 @@ def _split(text: str) -> List[str]:
     Returns:
         List[str]: The tokens list.
     """
-    return text.split()
+    text = text.strip()
+    if not text:
+        tokens = []
+    else:
+        tokens = text.split()
+    return tokens
 
 
 def _cn_split(text: str) -> List[str]:

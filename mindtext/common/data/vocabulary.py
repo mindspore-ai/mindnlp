@@ -14,6 +14,7 @@
 # ============================================================================
 """vocabulary class"""
 from typing import List, Union, Dict, Optional
+import collections
 from collections import Counter
 
 import pandas as pd
@@ -150,6 +151,22 @@ class Vocabulary:
         word = index.progress_apply(lambda n: [self.to_word(i) for i in n])
         return word
 
+    @property
+    def word2idx(self):
+        return self._word2idx
+
+    @property
+    def idx2word(self):
+        return self._idx2word
+
+    @word2idx.setter
+    def word2idx(self, value):
+        self._word2idx = value
+
+    @idx2word.setter
+    def idx2word(self, value):
+        self._idx2word = value
+
     @staticmethod
     def from_dataset(dataset: pd.DataFrame, field_name: Union[str, List[str]], max_size: Optional[int] = None,
                      min_freq: Optional[int] = None, padding: str = '<pad>', unknown: str = '<unk>'):
@@ -177,3 +194,37 @@ class Vocabulary:
                 vocab_bar.set_description("Build Vocabulary")
             vocab.build_vocab()
         return vocab
+
+    @staticmethod
+    def from_file(path: str):
+        """
+        Build a Vocabulary from a file.
+
+        Args:
+            path (str): Vocab file path
+
+        Returns:
+            Vocabulary: Vocabulary built from a vocab file.
+        """
+        vocab = Vocabulary()
+        vocab_dict = load_vocab_file(path)
+        vocab.word2idx = vocab_dict
+        vocab.idx2word = {i: w for w, i in tqdm(vocab_dict.items())}
+        return vocab
+
+
+def load_vocab_file(vocab_file: str) -> dict:
+    """
+    Loads a vocabulary file and turns into a {token:id} dictionary.
+    """
+    vocab_dict = collections.OrderedDict()
+    index = 0
+    with open(vocab_file, "r", encoding='utf-8') as vocab:
+        while True:
+            token = vocab.readline()
+            if not token:
+                break
+            token = token.strip()
+            vocab_dict[token] = index
+            index += 1
+    return dict(vocab_dict)

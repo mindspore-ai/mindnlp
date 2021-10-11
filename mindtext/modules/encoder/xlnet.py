@@ -715,7 +715,6 @@ class XLNetModel(nn.Cell):
         self.n_layer = config.n_layer
         self.one_hot_on_value = mindspore.Tensor(1.0, mindspore.dtype.float32)
         self.one_hot_off_value = mindspore.Tensor(0.0, mindspore.dtype.float32)
-        self.cast = mindspore.ops.Cast()
 
     def create_mask(self, qlen: int, mlen: int) -> Tensor:
         """

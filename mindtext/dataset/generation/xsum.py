@@ -15,7 +15,7 @@
 """
     XSUM dataset
 """
-from typing import Union, List, Optional
+from typing import Union, Optional
 
 import pandas as pd
 from pandas import DataFrame
@@ -54,16 +54,6 @@ class XSUMDataset(GenerateBaseDataset):
         self._vocab_min_freq = min_freq
         self._padding = padding
         self._unknown = unknown
-        if self._stream:
-            if (not isinstance(self._max_length, int) or not isinstance(self._max_pair_length, int)) and not isinstance(
-                    self._buckets, List):
-                raise TypeError(
-                    "`max_length`, `max_pair_length` or `buckets` should be assigned when `stream` is `True`.")
-        if bool(self._truncation_strategy) and not (
-                isinstance(self._max_length, int) or isinstance(self._max_pair_length, int)) and not isinstance(
-                    self._buckets, List):
-            raise TypeError(
-                "`truncation_strategy` need be `False` when `max_length` or `max_pair_length` is not assigned.")
 
     def __call__(self):
         self.load(self._paths)
