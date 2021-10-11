@@ -13,7 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """
-    XSUM dataset
+    WMT16 Ro-En dataset
 """
 from typing import Union, List, Optional
 
@@ -23,9 +23,9 @@ from pandas import DataFrame
 from ..base_dataset import GenerateBaseDataset
 
 
-class XSUMDataset(GenerateBaseDataset):
+class ROENDataset(GenerateBaseDataset):
     """
-    XSUM dataset.
+    Ro-En dataset.
 
     Args:
         path (str, Optional): Dataset file path or Dataset directory path, default None.
@@ -38,15 +38,15 @@ class XSUMDataset(GenerateBaseDataset):
         buckets (List[int], Optional): Padding row to the length of buckets, default None.
 
     Examples:
-        >>> xsum = XSUMDataset(tokenizer='spacy', lang='en')
-        # xsum = XSUMDataset(tokenizer='spacy', lang='en', buckets=[16,32,64])
-        >>> ds = xsum()
+        >>> roen = ROENDataset(tokenizer='facebook/bart')
+        # roen = ROENDataset(tokenizer='facebook/bart')
+        >>> ds = roen()
     """
 
     def __init__(self, paths: Optional[str] = None, tokenizer: Union[str] = 'spacy', lang: str = 'en',
                  max_size: Optional[int] = None, min_freq: Optional[int] = None, padding: str = '<pad>',
                  unknown: str = '<unk>', **kwargs):
-        super(XSUMDataset, self).__init__(name='XSUM', **kwargs)
+        super(ROENDataset, self).__init__(name='ROEN', **kwargs)
         self._paths = paths
         self._tokenize = tokenizer
         self._lang = lang
@@ -74,4 +74,5 @@ class XSUMDataset(GenerateBaseDataset):
 
     def _load(self, path: str) -> DataFrame:
         dataset = pd.read_csv(path, keep_default_na=False)
+        dataset.columns = ['summary', 'document']
         return dataset

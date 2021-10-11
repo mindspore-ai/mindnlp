@@ -312,7 +312,7 @@ class Dataset:
         type_cast_op = deC.TypeCast(mstype.int32)
         if not self._buckets:
             file_path = mr_dir_path.joinpath(file_name + ".mindrecord")
-            field_name = self._write_to_mr(dataset, str(file_path), is_test, process_function=process_function)
+            field_name = self._write_to_mr(dataset, str(file_path), process_function=process_function)
             if is_test:
                 if isinstance(self._test_columns_list, List):
                     field_name = self._test_columns_list
@@ -330,7 +330,7 @@ class Dataset:
                 for i in range(len(self._buckets)):
                     file_paths[self._buckets[i]] = str(mr_dir_path.joinpath(
                         file_name + "_" + str(self._buckets[i]) + ".mindrecord"))
-                field_name = self._write_to_mr(dataset, file_paths, is_test, process_function=process_function)
+                field_name = self._write_to_mr(dataset, file_paths, process_function=process_function)
                 if is_test:
                     if isinstance(self._test_columns_list, List):
                         field_name = self._test_columns_list
@@ -374,7 +374,7 @@ class Dataset:
         md_dataset = md_dataset.shuffle(md_dataset.get_dataset_size())
         return md_dataset
 
-    def _write_to_mr(self, dataset: DataFrame, file_path: Union[str, Dict[int, str]], is_test: bool,
+    def _write_to_mr(self, dataset: DataFrame, file_path: Union[str, Dict[int, str]],
                      process_function: callable = None) -> List[str]:
         """
         Write to .mindrecord file.
@@ -382,7 +382,6 @@ class Dataset:
         Args:
             dataset (DataFrame): Tokenizer function.
             file_path (Union[str, Dict[int, str]]): Path of mindrecord file.
-            is_test (bool): Whether the data set is a test set.
             process_function (callable): A function is used to preprocess data.
 
         Returns:
@@ -754,7 +753,8 @@ class CLSBaseDataset(Dataset):
                 data = row["sentence"]
                 return tuple(data)
 
-            dataset_tokenized = dataset_tokenized.apply(_list_split, axis=1, result_type="expand")
+            tqdm.pandas(desc=f"{self._name} {dataset_type} dataset processing.")
+            dataset_tokenized = dataset_tokenized.progress_apply(_list_split, axis=1, result_type="expand")
             if not isinstance(self._buckets, List) and not isinstance(self._max_length, int):
                 dataset_tokenized.columns = self._pretrained_model_inputs
                 self._max_length = dataset_tokenized["length"].max()
@@ -772,7 +772,7 @@ class CLSBaseDataset(Dataset):
                 self._pretrained_model_inputs.remove("length")
         return dataset
 
-    def _write_to_mr(self, dataset: DataFrame, file_path: Union[str, Dict[int, str]], is_test: bool,
+    def _write_to_mr(self, dataset: DataFrame, file_path: Union[str, Dict[int, str]],
                      process_function: callable = None) -> List[str]:
         """
         Write CLSDataset to .mindrecord file.
@@ -780,7 +780,6 @@ class CLSBaseDataset(Dataset):
         Args:
             dataset (DataFrame): Tokenizer function.
             file_path (Union[str, Dict[int, str]]): Path of mindrecord file.
-            is_test (bool): Whether the data set is a test set.
             process_function (callable): A function is used to preprocess data.
 
         Returns:
@@ -792,6 +791,7 @@ class CLSBaseDataset(Dataset):
                 writer[k] = FileWriter(file_name=v, shard_num=1)
         else:
             writer = FileWriter(file_name=file_path, shard_num=1)
+
         # Whether using a pretrained model tokenizer.
         if not isinstance(self._tokenizer, PreTrainedTokenizerBase):
             data_schema = {
@@ -801,8 +801,17 @@ class CLSBaseDataset(Dataset):
             data_schema = {}
             for i in self._pretrained_model_inputs:
                 data_schema[i] = {"type": "int32", "shape": [-1]}
-        if not is_test:
-            data_schema["label"] = {"type": "int32", "shape": [-1]}
+
+        if callable(process_function):
+            colmun_names = dataset.iterrows()
+            i, row = next(colmun_names)
+            row = process_function(row)
+            if "label" in row.keys():
+                data_schema["label"] = {"type": "int32", "shape": [-1]}
+        else:
+            if "label" in dataset.columns.values:
+                data_schema["label"] = {"type": "int32", "shape": [-1]}
+
         if isinstance(writer, Dict):
             for k in file_path.keys():
                 writer[k].add_schema(data_schema, self._name)
@@ -823,8 +832,13 @@ class CLSBaseDataset(Dataset):
                 for i in self._pretrained_model_inputs:
                     sample[i] = np.array(row[i], dtype=np.int32)
 
-            if not is_test:
-                sample["label"] = np.array(row["label"], dtype=np.int32)
+            if callable(process_function):
+                if "label" in row.keys():
+                    sample["label"] = np.array(row["label"], dtype=np.int32)
+            else:
+                if "label" in dataset.columns.values:
+                    sample["label"] = np.array(row["label"], dtype=np.int32)
+
             if not isinstance(writer, Dict):
                 data.append(sample)
                 if index % 10 == 0:
@@ -896,7 +910,7 @@ class PairCLSBaseDataset(Dataset):
         Returns:
             callable: A preprocess function.
         """
-        if dataset_type != "test":
+        if "label" in dataset.columns.values:
             if not self._label_is_float and isinstance(self._label_map, Dict):
                 dataset["label"] = dataset["label"].map(self.label_to_idx)
         if not isinstance(self._tokenizer, PreTrainedTokenizerBase):
@@ -979,7 +993,7 @@ class PairCLSBaseDataset(Dataset):
            DataFrame: Preprocessed dataset.
        """
         # Whether using a pretrained model tokenizer.
-        if dataset_type != "test":
+        if "label" in dataset.columns.values:
             if not self._label_is_float and isinstance(self._label_map, Dict):
                 dataset["label"] = dataset["label"].map(self.label_to_idx)
         if not isinstance(self._tokenizer, PreTrainedTokenizerBase):
@@ -1048,7 +1062,7 @@ class PairCLSBaseDataset(Dataset):
                 self._pretrained_model_inputs.remove("length")
         return dataset
 
-    def _write_to_mr(self, dataset: DataFrame, file_path: Union[str, Dict[int, str]], is_test: bool,
+    def _write_to_mr(self, dataset: DataFrame, file_path: Union[str, Dict[int, str]],
                      process_function: callable = None) -> List[str]:
         """
         Write CLSDataset to .mindrecord file.
@@ -1056,7 +1070,6 @@ class PairCLSBaseDataset(Dataset):
         Args:
             dataset (DataFrame): Tokenizer function.
             file_path (Union[str, Dict[int, str]]): Path of mindrecord file.
-            is_test (bool): Whether the data set is a test set.
             process_function (callable): A function is used to preprocess data.
 
         Returns:
@@ -1068,6 +1081,7 @@ class PairCLSBaseDataset(Dataset):
                 writer[k] = FileWriter(file_name=v, shard_num=1)
         else:
             writer = FileWriter(file_name=file_path, shard_num=1)
+
         # Whether using a pretrained model tokenizer.
         if not isinstance(self._tokenizer, PreTrainedTokenizerBase):
             data_schema = {
@@ -1079,11 +1093,23 @@ class PairCLSBaseDataset(Dataset):
             data_schema = {}
             for i in self._pretrained_model_inputs:
                 data_schema[i] = {"type": "int32", "shape": [-1]}
-        if not is_test:
-            if not self._label_is_float:
-                data_schema["label"] = {"type": "int32", "shape": [-1]}
-            else:
-                data_schema["label"] = {"type": "float32", "shape": [-1]}
+
+        if callable(process_function):
+            colmun_names = dataset.iterrows()
+            i, row = next(colmun_names)
+            row = process_function(row)
+            if "label" in row.keys():
+                if not self._label_is_float:
+                    data_schema["label"] = {"type": "int32", "shape": [-1]}
+                else:
+                    data_schema["label"] = {"type": "float32", "shape": [-1]}
+        else:
+            if "label" in dataset.columns.values:
+                if not self._label_is_float:
+                    data_schema["label"] = {"type": "int32", "shape": [-1]}
+                else:
+                    data_schema["label"] = {"type": "float32", "shape": [-1]}
+
         if isinstance(writer, Dict):
             for k in file_path.keys():
                 writer[k].add_schema(data_schema, self._name)
@@ -1106,11 +1132,19 @@ class PairCLSBaseDataset(Dataset):
                 for i in self._pretrained_model_inputs:
                     sample[i] = np.array(row[i], dtype=np.int32)
 
-            if not is_test:
-                if not self._label_is_float:
-                    sample["label"] = np.array(row["label"], dtype=np.int32)
-                else:
-                    sample["label"] = np.array(row["label"], dtype=np.float32)
+            if callable(process_function):
+                if "label" in row.keys():
+                    if not self._label_is_float:
+                        sample["label"] = np.array(row["label"], dtype=np.int32)
+                    else:
+                        sample["label"] = np.array(row["label"], dtype=np.float32)
+            else:
+                if "label" in dataset.columns.values:
+                    if not self._label_is_float:
+                        sample["label"] = np.array(row["label"], dtype=np.int32)
+                    else:
+                        sample["label"] = np.array(row["label"], dtype=np.float32)
+
             if not isinstance(writer, Dict):
                 data.append(sample)
                 if index % 10 == 0:
@@ -1148,3 +1182,332 @@ class PairCLSBaseDataset(Dataset):
             nums (str): The number of label.
         """
         self._label_nums = nums
+
+
+class GenerateBaseDataset(Dataset):
+    """
+    A base class of text generation.
+   """
+
+    def __init__(self, **kwargs):
+        super(GenerateBaseDataset, self).__init__(**kwargs)
+
+    def _stream_process(self, dataset: DataFrame, max_size: int, min_freq: int, padding: str, unknown: str,
+                        dataset_type: str) -> callable:
+        """
+        Preprocess dataset by data stream.
+
+        Args:
+            dataset (DataFrame): DataFrame need to preprocess.
+            max_size (int): Vocab max size.
+            min_freq (int): Min word frequency.
+            padding (str): Padding token.
+            unknown (str): Unknown token.
+            dataset_type (str):  Dataset type(train, dev, test).
+                Different types of datasets may be processed differently.
+
+        Returns:
+            callable: A preprocess function.
+        """
+        if not isinstance(self._tokenizer, PreTrainedTokenizerBase):
+            dataset['document'] = self.tokenize_progress(dataset, dataset_type, 'document')
+            dataset['summary'] = self.tokenize_progress(dataset, dataset_type, 'summary')
+
+            if dataset_type == 'train':
+                self._vocab = Vocabulary.from_dataset(dataset, field_name=['document', 'summary'], max_size=max_size,
+                                                      min_freq=min_freq,
+                                                      padding=padding, unknown=unknown)
+
+            if not self._buckets:
+                pad1 = Pad(max_length=self._max_length, pad_val=self._vocab.padding_idx,
+                           truncate=self._truncation_strategy)
+                pad2 = Pad(max_length=self._max_pair_length, pad_val=self._vocab.padding_idx,
+                           truncate=self._truncation_strategy)
+
+                def token_to_idx(row):
+                    data = {"input_ids": [self._vocab[i] for i in row["document"]],
+                            "output_ids": [self._vocab[i] for i in row["summary"]]}
+                    data["input_length"] = len(data["input_ids"])
+                    data["output_length"] = len(data["output_ids"])
+                    data["input_ids"] = pad1(data["input_ids"])
+                    data["output_ids"] = pad2(data["output_ids"])
+                    return data
+            else:
+                pad = Pad(pad_val=self._vocab.padding_idx, buckets=self._buckets, truncate=self._truncation_strategy)
+
+                def token_to_idx(row):
+                    data = {"input_ids": [self._vocab[i] for i in row["document"]],
+                            "output_ids": [self._vocab[i] for i in row["summary"]]}
+                    data["input_length"] = len(data["input_ids"])
+                    data["output_length"] = len(data["output_ids"])
+                    data["input_ids"] = pad(data["input_ids"])
+                    data["output_ids"] = pad(data["output_ids"])
+                    if len(data["input_ids"]) > len(data["output_ids"]):
+                        data["output_ids"] = Pad.padding(data["output_ids"], len(data["input_ids"]),
+                                                         self._vocab.padding_idx)
+                    else:
+                        data["input_ids"] = Pad.padding(data["input_ids"], len(data["output_ids"]),
+                                                        self._vocab.padding_idx)
+                    data["padding_length"] = len(data["input_ids"])
+                    return data
+        else:
+            self._pretrained_model_inputs = list(
+                self._tokenizer("", return_length=not isinstance(self._buckets, List) and not isinstance(
+                    self._max_length, int)).data.keys())
+
+            if not self._buckets:
+                def token_to_idx(row):
+                    model_inputs = self._tokenizer(row["document"], truncation=self._truncation_strategy,
+                                                   padding="max_length", max_length=self._max_length)
+                    with self._tokenizer.as_target_tokenizer():
+                        label = self._tokenizer(row["summary"], truncation=self._truncation_strategy,
+                                                padding="max_length", max_length=self._max_pair_length)
+                    model_inputs["labels"] = label["input_ids"]
+                    return model_inputs
+            else:
+                def token_to_idx(row):
+                    document_length = len(self._tokenizer.tokenize(row["document"], add_special_tokens=True))
+                    summary_length = len(self._tokenizer.tokenize(row["summary"], add_special_tokens=True))
+                    d_i = 0
+                    for d_i in self._buckets:
+                        if d_i >= document_length:
+                            break
+                    s_i = 0
+                    for s_i in self._buckets:
+                        if s_i >= summary_length:
+                            break
+                    i = d_i if d_i > s_i else s_i
+                    model_inputs = self._tokenizer(row["document"], truncation=self._truncation_strategy,
+                                                   padding="max_length", max_length=i)
+
+                    with self._tokenizer.as_target_tokenizer():
+                        label = self._tokenizer(row["summary"], truncation=self._truncation_strategy,
+                                                padding="max_length", max_length=i)
+                    model_inputs["labels"] = label["input_ids"]
+                    model_inputs["padding_length"] = len(model_inputs["input_ids"])
+                    return model_inputs
+        return token_to_idx
+
+    def _process(self, dataset: DataFrame, max_size: int, min_freq: int, padding: str,
+                 unknown: str, dataset_type: str) -> DataFrame:
+        # Whether using a pretrained model tokenizer.
+        if not isinstance(self._tokenizer, PreTrainedTokenizerBase):
+            dataset["document"] = self.tokenize_progress(dataset, dataset_type, "document")
+            dataset["summary"] = self.tokenize_progress(dataset, dataset_type, "summary")
+
+            if dataset_type == 'train':
+                self._vocab = Vocabulary.from_dataset(dataset, field_name=['document', 'summary'], max_size=max_size,
+                                                      min_freq=min_freq,
+                                                      padding=padding, unknown=unknown)
+            dataset["input_ids"] = self._vocab.word_to_idx(dataset["document"])
+            dataset["output_ids"] = self._vocab.word_to_idx(dataset["summary"])
+            dataset.drop("document", axis=1, inplace=True)
+            dataset.drop("summary", axis=1, inplace=True)
+            dataset["input_length"] = self.get_length_progress(dataset, dataset_type, "input_ids")
+            dataset["output_length"] = self.get_length_progress(dataset, dataset_type, "output_ids")
+            if not self._buckets:
+                if isinstance(self._max_length, int):
+                    max_length1 = self._max_length
+                else:
+                    max_length1 = dataset["input_length"].max()
+                if isinstance(self._max_pair_length, int):
+                    max_length2 = self._max_pair_length
+                else:
+                    max_length2 = dataset["output_length"].max()
+                pad1 = Pad(max_length=max_length1, pad_val=self._vocab.padding_idx, truncate=self._truncation_strategy)
+                pad2 = Pad(max_length=max_length2, pad_val=self._vocab.padding_idx, truncate=self._truncation_strategy)
+                dataset["input_ids"] = self.padding_progress(dataset, dataset_type, field="input_ids",
+                                                             pad_function=pad1)
+                dataset["output_ids"] = self.padding_progress(dataset, dataset_type, field="output_ids",
+                                                              pad_function=pad2)
+            else:
+                pad = Pad(pad_val=self._vocab.padding_idx, buckets=self._buckets, truncate=self._truncation_strategy)
+                dataset["input_ids"] = self.padding_progress(dataset, dataset_type, field="input_ids",
+                                                             pad_function=pad)
+                dataset["output_ids"] = self.padding_progress(dataset, dataset_type, field="output_ids",
+                                                              pad_function=pad)
+                dataset[["input_ids", "output_ids"]] = self.padding_same_progress(dataset, dataset_type,
+                                                                                  ["input_ids", "output_ids"])
+                dataset["padding_length"] = self.get_length_progress(dataset, dataset_type, "input_ids")
+        else:
+            self._pretrained_model_inputs_document = list(
+                self._tokenizer("", return_length=not isinstance(self._buckets, List) and not isinstance(
+                    self._max_length, int)).data.keys())
+            self._pretrained_model_inputs_summary = list(
+                self._tokenizer("", return_length=not isinstance(self._buckets, List) and not isinstance(
+                    self._max_pair_length, int)).data.keys())
+            document = DataFrame(self.tokenize_progress(dataset, dataset_type, field="document"))
+            dataset.drop("document", axis=1, inplace=True)
+
+            temp_pair_length = self._max_pair_length
+            temp_length = self._max_length
+            self._max_length = self._max_pair_length
+
+            summary = DataFrame(self.tokenize_progress(dataset, dataset_type, field="summary"))
+            dataset.drop("summary", axis=1, inplace=True)
+
+            self._max_pair_length = temp_pair_length
+            self._max_length = temp_length
+
+            def document_list_split(row):
+                data = row["document"]
+                return tuple(data)
+
+            tqdm.pandas(desc=f"{self._name} {dataset_type} dataset processing.")
+            document = document.progress_apply(document_list_split, axis=1, result_type="expand")
+
+            def summary_list_split(row):
+                data = row["summary"]
+                return tuple(data)
+
+            tqdm.pandas(desc=f"{self._name} {dataset_type} dataset processing.")
+            summary = summary.progress_apply(summary_list_split, axis=1, result_type="expand")
+            if not isinstance(self._buckets, List) and not isinstance(self._max_length, int):
+                document.columns = self._pretrained_model_inputs_document
+                self._max_length = document["length"].max()
+                document = DataFrame(
+                    self.padding_progress(document, dataset_type, pad_function=self._tokenizer.pad))
+                document.columns = self._pretrained_model_inputs_document
+                document.drop("length", axis=1, inplace=True)
+                self._pretrained_model_inputs_document.remove("length")
+            else:
+                document.columns = self._pretrained_model_inputs_document
+
+            if not isinstance(self._buckets, List) and not isinstance(self._max_pair_length, int):
+                summary.columns = self._pretrained_model_inputs_summary
+                self._max_pair_length = summary["length"].max()
+                temp_pair_length = self._max_pair_length
+                temp_length = self._max_length
+                self._max_length = self._max_pair_length
+                summary = DataFrame(
+                    self.padding_progress(summary, dataset_type, pad_function=self._tokenizer.pad))
+                self._max_pair_length = temp_pair_length
+                self._max_length = temp_length
+                summary.columns = self._pretrained_model_inputs_summary
+                summary.drop("length", axis=1, inplace=True)
+                self._pretrained_model_inputs_summary.remove("length")
+            else:
+                summary.columns = self._pretrained_model_inputs_summary
+
+            dataset[document.columns] = document
+            dataset["labels"] = summary["input_ids"]
+            del document
+            del summary
+            if isinstance(self._buckets, List):
+                dataset["input_ids_length"] = self.get_length_progress(dataset, dataset_type, "input_ids")
+                dataset["labels_length"] = self.get_length_progress(dataset, dataset_type, "labels")
+                group = dataset.groupby("input_ids_length")
+                for i in group:
+                    _, dataset_group = i
+                    self._max_length = dataset_group["labels_length"].max()
+                    dataset_group = DataFrame(
+                        self.padding_progress(DataFrame({"input_ids": dataset_group['labels']}), dataset_type,
+                                              pad_function=self._tokenizer.pad))
+                    dataset_group.columns = self._pretrained_model_inputs
+                    dataset['labels'][dataset_group.index] = dataset_group['input_ids']
+                dataset["padding_length"] = self.get_length_progress(dataset, dataset_type, "input_ids")
+            self._pretrained_model_inputs = self._pretrained_model_inputs_document
+        return dataset
+
+    def _write_to_mr(self, dataset: DataFrame, file_path: Union[str, Dict[int, str]],
+                     process_function: callable = None) -> List[str]:
+        """
+        Write CLSDataset to .mindrecord file.
+
+        Args:
+            dataset (DataFrame): Tokenizer function.
+            file_path (Union[str, Dict[int, str]]): Path of mindrecord file.
+            process_function (callable): A function is used to preprocess data.
+
+        Returns:
+            List[str]: Dataset field
+        """
+        if isinstance(file_path, Dict):
+            writer = {}
+            for k, v in file_path.items():
+                writer[k] = FileWriter(file_name=v, shard_num=1)
+        else:
+            writer = FileWriter(file_name=file_path, shard_num=1)
+        # Whether using a pretrained model tokenizer.
+        if not isinstance(self._tokenizer, PreTrainedTokenizerBase):
+            data_schema = {
+                'input_ids': {'type': 'int32', 'shape': [-1]},
+                'input_length': {'type': 'int32', 'shape': [-1]}}
+        else:
+            data_schema = {}
+            for i in self._pretrained_model_inputs:
+                data_schema[i] = {'type': 'int32', 'shape': [-1]}
+
+        if callable(process_function):
+            colmun_names = dataset.iterrows()
+            i, row = next(colmun_names)
+            row = process_function(row)
+            if ("labels" in row.keys()) or ("output_ids" in row.keys()):
+                if not isinstance(self._tokenizer, PreTrainedTokenizerBase):
+                    data_schema["output_ids"] = {"type": "int32", "shape": [-1]}
+                    data_schema["output_length"] = {"type": "int32", "shape": [-1]}
+                else:
+                    data_schema["labels"] = {"type": "int32", "shape": [-1]}
+        else:
+            if ("labels" in dataset.columns.values) or ("output_ids" in dataset.columns.values):
+                if not isinstance(self._tokenizer, PreTrainedTokenizerBase):
+                    data_schema["output_ids"] = {"type": "int32", "shape": [-1]}
+                    data_schema["output_length"] = {"type": "int32", "shape": [-1]}
+                else:
+                    data_schema["labels"] = {"type": "int32", "shape": [-1]}
+
+        if isinstance(writer, Dict):
+            for k in file_path.keys():
+                writer[k].add_schema(data_schema, self._name)
+        else:
+            writer.add_schema(data_schema, self._name)
+        if not isinstance(writer, Dict):
+            data = []
+        vocab_bar = tqdm(dataset.iterrows(), total=len(dataset))
+        for index, row in vocab_bar:
+            # Whether using a pretrained model tokenizer.
+            if callable(process_function):
+                row = process_function(row)
+            if not isinstance(self._tokenizer, PreTrainedTokenizerBase):
+                sample = {'input_ids': np.array(row["input_ids"], dtype=np.int64),
+                          'input_length': np.array(row["input_length"], dtype=np.int64)}
+            else:
+                sample = {}
+                for i in self._pretrained_model_inputs:
+                    sample[i] = np.array(row[i], dtype=np.int64)
+
+            if callable(process_function):
+                if ("labels" in row.keys()) or ("output_ids" in row.keys()):
+                    if not isinstance(self._tokenizer, PreTrainedTokenizerBase):
+                        sample['output_ids'] = np.array(row["output_ids"], dtype=np.int64)
+                        sample['output_length'] = np.array(row["output_length"], dtype=np.int64)
+                    else:
+                        sample['labels'] = np.array(row['labels'], dtype=np.int64)
+            else:
+                if ("labels" in dataset.columns.values) or ("output_ids" in dataset.columns.values):
+                    if not isinstance(self._tokenizer, PreTrainedTokenizerBase):
+                        sample['output_ids'] = np.array(row["output_ids"], dtype=np.int64)
+                        sample['output_length'] = np.array(row["output_length"], dtype=np.int64)
+                    else:
+                        sample['labels'] = np.array(row['labels'], dtype=np.int64)
+
+            if not isinstance(writer, Dict):
+                data.append(sample)
+                if index % 10 == 0:
+                    writer.write_raw_data(data)
+                    data = []
+            else:
+                if row["padding_length"] > list(writer.keys())[-1]:
+                    writer[list(writer.keys())[-1]].write_raw_data([sample])
+                else:
+                    writer[row["padding_length"]].write_raw_data([sample])
+            vocab_bar.set_description("Writing data to .mindrecord file")
+        if not isinstance(writer, Dict):
+            if data:
+                writer.write_raw_data(data)
+        if not isinstance(writer, Dict):
+            writer.commit()
+        else:
+            for v in writer.values():
+                v.commit()
+        return list(data_schema.keys())

@@ -18,10 +18,10 @@
 import json
 from typing import Union, Dict, List
 
-import tqdm
 import numpy as np
 import pandas as pd
 from pandas import DataFrame
+from tqdm import tqdm
 from transformers import PreTrainedTokenizerBase
 
 import mindspore.dataset as ds
@@ -70,7 +70,7 @@ class SquadDataset(Dataset):
         self.process(tokenizer=self._tokenize, lang=self._lang, max_size=self._vocab_max_size,
                      min_freq=self._vocab_min_freq, padding=self._padding,
                      unknown=self._unknown, buckets=self._buckets)
-        return self.mind_datasets
+        return self._mind_datasets
 
     def _load(self, path: str) -> DataFrame:
         """
@@ -115,8 +115,12 @@ class SquadDataset(Dataset):
                         real_count += 1
         return dataset
 
-    def _process(self, dataset: DataFrame, max_size: int, min_freq: int, padding: str, unknown: str, dataset_type: str,
-                 buckets: List[int]) -> DataFrame:
+    def _stream_process(self, dataset: DataFrame, max_size: int, min_freq: int, padding: str, unknown: str,
+                        dataset_type: str) -> callable:
+        raise NotImplementedError(f"{self.__class__} cannot be preprocessed by data stream.")
+
+    def _process(self, dataset: DataFrame, max_size: int, min_freq: int, padding: str,
+                 unknown: str, dataset_type: str) -> DataFrame:
         """
         LUKE Model preprocess
 
@@ -128,7 +132,6 @@ class SquadDataset(Dataset):
             unknown (str): Unknown token.
             dataset_type (str): Dataset type(train, dev, test).
                 Different types of datasets may be preprocessed differently.
-            buckets (List[int]): Padding row to the length of buckets.
 
         Returns:
             Dict[str, MindDataset]: A MindDataset dictionary.
@@ -152,7 +155,7 @@ class SquadDataset(Dataset):
             dataset.drop('input_ids_c', axis=1, inplace=True)
             dataset['input_ids_q'] = self.get_length_progress(dataset, dataset_type, 'input_ids_q')
             dataset['input_ids_c'] = self.get_length_progress(dataset, dataset_type, 'input_ids_c')
-            if not buckets:
+            if not self._buckets:
                 if isinstance(self._max_length, int):
                     max_length1 = self._max_length
                 else:
@@ -168,7 +171,7 @@ class SquadDataset(Dataset):
                 dataset['input_ids_c'] = self.padding_progress(dataset, dataset_type, field='input_ids_c',
                                                                pad_function=pad2)
             else:
-                pad = Pad(self._vocab.padding_idx, buckets=buckets)
+                pad = Pad(self._vocab.padding_idx, buckets=self._buckets)
                 dataset['input_ids_q'] = self.padding_progress(dataset, dataset_type, field='input_ids_q',
                                                                pad_function=pad)
                 dataset['input_ids_c'] = self.padding_progress(dataset, dataset_type, field='input_ids_c',
@@ -207,14 +210,15 @@ class SquadDataset(Dataset):
                 self._pretrained_model_inputs.remove("length")
         return dataset
 
-    def _write_to_mr(self, dataset: DataFrame, file_path: str, is_test: bool) -> List[str]:
+    def _write_to_mr(self, dataset: DataFrame, file_path: Union[str, Dict[int, str]],
+                     process_function: callable = None) -> List[str]:
         """
         Write RCDataset to .mindrecord file.
 
         Args:
             dataset (DataFrame): Tokenizer function.
             file_path (str): Path of mindrecord file.
-            is_test (bool): Whether the data set is a test set.
+            process_function (callable): A function is used to preprocess data.
 
         Returns:
             List[str]: Dataset field
@@ -231,7 +235,7 @@ class SquadDataset(Dataset):
             "entity_attention_mask": {"type": "int32", "shape": [-1]},
         }
 
-        if not is_test:
+        if ("start_position" in dataset.columns.values) and ("end_position" in dataset.columns.values):
             data_schema['start_position'] = {'type': 'int32', 'shape': [-1]}
             data_schema['end_position'] = {'type': 'int32', 'shape': [-1]}
         writer.add_schema(data_schema, self._name)
@@ -247,7 +251,7 @@ class SquadDataset(Dataset):
                       "entity_segment_ids": np.array(row["entity_segment_ids"], dtype=np.int32),
                       "entity_attention_mask": np.array(row["entity_attention_mask"], dtype=np.int32),
                       }
-            if not is_test:
+            if ("start_position" in dataset.columns.values) and ("end_position" in dataset.columns.values):
                 sample['start_position'] = np.array(row['start_position'], dtype=np.int32)
                 sample['end_position'] = np.array(row['end_position'], dtype=np.int32)
             data.append(sample)
