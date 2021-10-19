@@ -13,5 +13,11 @@
 # limitations under the License.
 # ============================================================================
 """
-    tagging init
+    Builder of dataset.
 """
+from ..common.utils.class_factory import ClassFactory, ModuleType
+
+
+def build_dataset(cfg):
+    """Builder of box assigner."""
+    return ClassFactory.get_instance_from_cfg(cfg, ModuleType.DATASET)

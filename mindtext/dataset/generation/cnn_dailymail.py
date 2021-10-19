@@ -21,8 +21,10 @@ import pandas as pd
 from pandas import DataFrame
 
 from .xsum import GenerateBaseDataset
+from .. import ClassFactory, ModuleType
 
 
+@ClassFactory.register(ModuleType.DATASET)
 class CNNDailyMailDataset(GenerateBaseDataset):
     """
     CNN_DailyMail dataset.
@@ -39,8 +41,8 @@ class CNNDailyMailDataset(GenerateBaseDataset):
 
     Examples:
         >>> cnn = CNNDailyMailDataset(tokenizer='spacy', lang='en')
-        # cnn = CNNDailyMailDataset(tokenizer='spacy', lang='en', buckets=[16,32,64])
-        >>> ds = cnn()
+          # cnn = CNNDailyMailDataset(tokenizer='spacy', lang='en', buckets=[16,32,64])
+        >>> dataset = cnn()
     """
 
     def __init__(self, paths: Optional[str] = None, tokenizer: Union[str] = 'spacy', lang: str = 'en',

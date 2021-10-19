@@ -13,7 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """
-    MRPC dataset
+    QNLI dataset
 """
 from typing import Union, Dict, Optional
 
@@ -23,8 +23,10 @@ from pandas import DataFrame
 
 from ..base_dataset import PairCLSBaseDataset
 from ..utils import get_split_func
+from .. import ClassFactory, ModuleType
 
 
+@ClassFactory.register(ModuleType.DATASET)
 class QNLIDataset(PairCLSBaseDataset):
     """
     QNLI dataset.
@@ -41,8 +43,8 @@ class QNLIDataset(PairCLSBaseDataset):
 
     Examples:
         >>> qnli = QNLIDataset(tokenizer='spacy', lang='en')
-        # qnli = QNLIDataset(tokenizer='spacy', lang='en', buckets=[16,32,64])
-        >>> ds = qnli()
+          # qnli = QNLIDataset(tokenizer='spacy', lang='en', buckets=[16,32,64])
+        >>> dataset = qnli()
     """
 
     def __init__(self, paths: Optional[Union[str, Dict[str, str]]] = None,

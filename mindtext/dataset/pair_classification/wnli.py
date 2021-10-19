@@ -13,7 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """
-    MRPC dataset
+    WNLI dataset
 """
 from typing import Union, Dict, Optional
 
@@ -23,8 +23,10 @@ from pandas import DataFrame
 
 from ..base_dataset import PairCLSBaseDataset
 from ..utils import get_split_func
+from .. import ClassFactory, ModuleType
 
 
+@ClassFactory.register(ModuleType.DATASET)
 class WNLIDataset(PairCLSBaseDataset):
     """
     WNLI dataset.
@@ -41,8 +43,8 @@ class WNLIDataset(PairCLSBaseDataset):
 
     Examples:
         >>> wnli = WNLIDataset(tokenizer='spacy', lang='en')
-        # wnli = WNLIDataset(tokenizer='spacy', lang='en', buckets=[16,32,64])
-        >>> ds = wnli()
+          # wnli = WNLIDataset(tokenizer='spacy', lang='en', buckets=[16,32,64])
+        >>> dataset = wnli()
     """
 
     def __init__(self, paths: Optional[Union[str, Dict[str, str]]] = None,

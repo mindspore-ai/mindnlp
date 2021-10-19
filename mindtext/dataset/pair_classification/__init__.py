@@ -15,10 +15,3 @@
 """
     pair_classification init
 """
-from .rte import RTEDataset
-from .mnli import MNLIDataset
-from .qqp import QQPDataset
-from .mrpc import MRPCDataset
-from .qnli import QNLIDataset
-from .afqmc import AFQMCDataset
-from .lcqmc import LCQMCDataset

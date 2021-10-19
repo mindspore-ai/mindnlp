@@ -13,7 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """
-    CMNLI dataset
+    Iflytek dataset
 """
 from typing import Union, Dict, List, Optional
 
@@ -21,8 +21,10 @@ import pandas as pd
 from pandas import DataFrame
 
 from mindtext.dataset.base_dataset import CLSBaseDataset
+from .. import ClassFactory, ModuleType
 
 
+@ClassFactory.register(ModuleType.DATASET)
 class IflytekDataset(CLSBaseDataset):
     """
     Iflytek dataset.
@@ -38,9 +40,9 @@ class IflytekDataset(CLSBaseDataset):
         buckets (List[int], Optional): Padding row to the length of buckets, default None.
 
     Examples:
-       #>>> iflytek = IflytekDataset(path,tokenizer='cn-char', lang='en')
+       >>> iflytek = IflytekDataset(path,tokenizer='cn-char', lang='en')
          # iflytek = IflytekDataset(tokenizer='cn-char', lang='en')
-       #>>> data = iflytek()
+       >>> dataset = iflytek()
     """
 
     def __init__(self, paths: Optional[Union[str, Dict[str, str]]] = None,
@@ -78,7 +80,7 @@ class IflytekDataset(CLSBaseDataset):
         with open(path, 'r', encoding='utf-8') as f:
             dataset = pd.read_json(f, lines=True)
             if "label" in dataset.columns.values:
-                dataset = dataset[['label', 'label_des', 'sentence', 'id']]
+                dataset = dataset[['label', 'label_des', 'sentence']]
             else:
                 dataset = dataset[['sentence', 'id']]
             dataset.fillna('')

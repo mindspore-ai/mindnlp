@@ -23,7 +23,10 @@ from pandas import DataFrame
 import mindspore.dataset as ds
 
 from ..base_dataset import CLSBaseDataset
+from .. import ClassFactory, ModuleType
 
+
+@ClassFactory.register(ModuleType.DATASET)
 class SEABSA16Dataset(CLSBaseDataset):
     """
     SE-ABSA16_PHNS dataset load.
@@ -38,8 +41,8 @@ class SEABSA16Dataset(CLSBaseDataset):
         unknown (str): Unknown token,default `<unk>`.
         buckets (List[int], Optional): Padding row to the length of buckets, default None.
     Examples:
-        SEABSA16Dataset = SEABSA16Dataset(tokenizer='spacy', lang='en',paths=Path to the dataset folder)
-        ds = SEABSA16Dataset()
+        >>> SEABSA16Dataset = SEABSA16Dataset(tokenizer='spacy', lang='en',paths=Path to the dataset folder)
+        >>> dataset = SEABSA16Dataset()
     """
 
     def __init__(self, paths: Optional[Union[str, Dict[str, str]]] = None,

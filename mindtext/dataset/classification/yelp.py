@@ -12,15 +12,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-"""Yelp dataset"""
+"""
+    Yelp dataset
+"""
 from typing import Union, Dict, List, Optional
+
 import pandas as pd
 from pandas import DataFrame
-
 import mindspore.dataset as ds
+
 from ..base_dataset import CLSBaseDataset
+from .. import ClassFactory, ModuleType
 
 
+@ClassFactory.register(ModuleType.DATASET)
 class YelpFullDataset(CLSBaseDataset):
     """
     YelpFull dataset load.

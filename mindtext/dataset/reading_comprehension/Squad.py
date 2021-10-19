@@ -28,11 +28,13 @@ import mindspore.dataset as ds
 from mindspore.mindrecord import FileWriter
 from ..base_dataset import Dataset
 from ...common import Pad, Vocabulary
+from .. import ClassFactory, ModuleType
 
 
+@ClassFactory.register(ModuleType.DATASET)
 class SquadDataset(Dataset):
     """
-    CoLA dataset load.
+    SQuAD dataset load.
 
     Args:
         paths (Union[str, Dict[str, str]], Optional): Dataset file path or Dataset directory path, default None.
@@ -46,8 +48,8 @@ class SquadDataset(Dataset):
 
     Examples:
         >>> squad = SquadDataset(tokenizer='studio-ousia/luke-large')
-        # squad = SquadDataset(tokenizer='studio-ousia/luke-large')
-        >>> ds = squad()
+          # squad = SquadDataset(tokenizer='studio-ousia/luke-large')
+        >>> dataset = squad()
     """
 
     def __init__(self, paths: Union[str, Dict[str, str]] = None,

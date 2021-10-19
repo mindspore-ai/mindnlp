@@ -22,8 +22,10 @@ from pandas import DataFrame
 from tqdm import tqdm
 
 from ..base_dataset import PairCLSBaseDataset
+from .. import ClassFactory, ModuleType
 
 
+@ClassFactory.register(ModuleType.DATASET)
 class AFQMCDataset(PairCLSBaseDataset):
     """
     AFQMC dataset.
@@ -40,8 +42,8 @@ class AFQMCDataset(PairCLSBaseDataset):
 
     Examples:
         >>> afqmc = AFQMCDataset(tokenizer='spacy', lang='en')
-        # afqmc = AFQMCDataset(tokenizer='spacy', lang='en', buckets=[16,32,64])
-        >>> ds = afqmc()
+          # afqmc = AFQMCDataset(tokenizer='spacy', lang='en', buckets=[16,32,64])
+        >>> dataset = afqmc()
     """
 
     def __init__(self, paths: Optional[Union[str, Dict[str, str]]] = None,

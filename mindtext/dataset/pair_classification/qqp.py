@@ -13,7 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """
-    RTE dataset
+    QQP dataset
 """
 from typing import Union, Dict, Optional
 
@@ -23,8 +23,10 @@ from pandas import DataFrame
 
 from ..base_dataset import PairCLSBaseDataset
 from ..utils import get_split_func
+from .. import ClassFactory, ModuleType
 
 
+@ClassFactory.register(ModuleType.DATASET)
 class QQPDataset(PairCLSBaseDataset):
     """
     QQP dataset.
@@ -41,8 +43,8 @@ class QQPDataset(PairCLSBaseDataset):
 
     Examples:
         >>> qqp = QQPDataset(tokenizer='spacy', lang='en')
-        # qqp = QQPDataset(tokenizer='spacy', lang='en', buckets=[16,32,64])
-        >>> ds = qqp()
+          # qqp = QQPDataset(tokenizer='spacy', lang='en', buckets=[16,32,64])
+        >>> dataset = qqp()
     """
 
     def __init__(self, paths: Optional[Union[str, Dict[str, str]]] = None,

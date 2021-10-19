@@ -199,16 +199,18 @@ class Dataset:
             There are several inputs mode:
             0.If None, it checks to see if there is a local cache. If not, it is automatically downloaded and cached.
             1.given a directory, the "train" in directory will be considered to be train dataset::
-                ds = xxxDataset().load("/path/dir")
-                #  ds = {"train":..., "dev":..., "test":...} if the directory contains "train", "dev", "test".
-            2.given a dict,such as train,dev,test not in the same directory,or the train, dev,
-            test are not contained in directory::
+                ds = xxxDataset()
+                dataset = ds.load("/path/dir")
+                #  dataset = {"train":..., "dev":..., "test":...} if the directory contains "train", "dev", "test".
+            2.given a dict,such as train,dev,test not in the same directory,or the train, dev, test are not contained
+            in directory::
                 paths = {"train":"/path/to/train.tsv", "dev":"/to/validate.tsv", "test":"/to/test.tsv"}
-                ds = xxxDataset().load(paths)
-                #  ds = {"train":..., "dev":..., "test":...}
+                ds = xxxDataset()
+                dataset = ds.load(paths)
+                #  dataset = {"train":..., "dev":..., "test":...}
             3.give a file name::
-                ds = xxxDataset().load("/path/to/a/train.conll")
-                tr_data = data_bundle.get_dataset("train")  # the file name contain "train".
+                ds = xxxDataset()
+                dataset = ds.load("/path/to/a/train.conll")
         """
         if not paths:
             paths = self.download()

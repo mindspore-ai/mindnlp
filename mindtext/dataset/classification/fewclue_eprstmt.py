@@ -21,8 +21,10 @@ import pandas as pd
 from pandas import DataFrame
 
 from mindtext.dataset.base_dataset import CLSBaseDataset
+from .. import ClassFactory, ModuleType
 
 
+@ClassFactory.register(ModuleType.DATASET)
 class FewclueEprstmtDataset(CLSBaseDataset):
     """
     fewclue eprstmt dataset.

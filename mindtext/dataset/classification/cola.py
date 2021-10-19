@@ -25,8 +25,10 @@ import mindspore.dataset as ds
 
 from ..base_dataset import CLSBaseDataset
 from ..utils import get_split_func
+from .. import ClassFactory, ModuleType
 
 
+@ClassFactory.register(ModuleType.DATASET)
 class CoLADataset(CLSBaseDataset):
     """
     CoLA dataset load.
@@ -44,7 +46,7 @@ class CoLADataset(CLSBaseDataset):
     Examples:
         >>> cola = CoLADataset(tokenizer='spacy', lang='en')
         # cola = CoLADataset(tokenizer='spacy', lang='en', buckets=[16,32,64])
-        >>> ds = cola()
+        >>> dataset = cola()
     """
 
     def __init__(self, paths: Optional[Union[str, Dict[str, str]]] = None,

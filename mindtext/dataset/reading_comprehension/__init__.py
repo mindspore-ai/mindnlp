@@ -15,4 +15,3 @@
 """
     classification init
 """
-from .Squad import SquadDataset

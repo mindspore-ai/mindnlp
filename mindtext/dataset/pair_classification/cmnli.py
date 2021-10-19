@@ -21,8 +21,10 @@ import pandas as pd
 from pandas import DataFrame
 
 from mindtext.dataset.base_dataset import PairCLSBaseDataset
+from .. import ClassFactory, ModuleType
 
 
+@ClassFactory.register(ModuleType.DATASET)
 class CMNLIDataset(PairCLSBaseDataset):
     """
     CMNLI dataset.
@@ -38,9 +40,9 @@ class CMNLIDataset(PairCLSBaseDataset):
         buckets (List[int], Optional): Padding row to the length of buckets, default None.
 
     Examples:
-       #>>> cmnli = CMNLIDataset(path,tokenizer='cn-char', lang='en')
+       >>> cmnli = CMNLIDataset(path,tokenizer='cn-char', lang='en')
          # cmnli = CMNLIDataset(tokenizer='cn-char', lang='en')
-       #>>> cm = cmnli()
+       >>> dataset = cmnli()
     """
 
     def __init__(self, paths: Optional[Union[str, Dict[str, str]]] = None,

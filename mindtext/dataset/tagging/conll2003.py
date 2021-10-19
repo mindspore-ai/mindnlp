@@ -29,8 +29,10 @@ from mindspore.mindrecord import FileWriter
 
 from ..utils import check_loader_paths
 from .. import Vocabulary, Pad
+from .. import ClassFactory, ModuleType
 
 
+@ClassFactory.register(ModuleType.DATASET)
 class CONLLDataset(Dataset):
     """
     CONLL Dataset.
@@ -44,9 +46,8 @@ class CONLLDataset(Dataset):
         buckets (List[int], Optional): Padding row to the length of buckets, default None.
 
     Examples:
-       >>> conll = CONLLDataset(tokenizer='eng.train')
-         # conll = CONLLDataset(tokenizer='eng.train')
-       >>> data = conll()
+       >>> conll = CONLLDataset(paths=Path to the dataset folder)
+       >>> dataset = conll()
     """
 
     def __init__(self, paths: Union[str, Dict[str, str]] = None, max_size: int = None,

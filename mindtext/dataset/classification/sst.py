@@ -20,8 +20,10 @@ from typing import Union, Dict, Optional
 import mindspore.dataset as ds
 
 from ..base_dataset import CLSBaseDataset
+from .. import ClassFactory, ModuleType
 
 
+@ClassFactory.register(ModuleType.DATASET)
 class SST2Dataset(CLSBaseDataset):
     """
     SST2 dataset.
@@ -38,8 +40,8 @@ class SST2Dataset(CLSBaseDataset):
 
     Examples:
         >>> sst2 = SST2Dataset(tokenizer='spacy', lang='en')
-        # sst2 = SST2Dataset(tokenizer='spacy', lang='en', buckets=[16,32,64])
-        >>> ds = sst2()
+          # sst2 = SST2Dataset(tokenizer='spacy', lang='en', buckets=[16,32,64])
+        >>> dataset = sst2()
     """
 
     def __init__(self, paths: Optional[Union[str, Dict[str, str]]] = None,
