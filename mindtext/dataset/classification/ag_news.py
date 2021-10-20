@@ -12,15 +12,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-""" AG News dataset"""
+"""
+    AG News dataset
+"""
 from typing import Union, Dict
 import pandas as pd
 from pandas import DataFrame
 
 import mindspore.dataset as ds
 from mindtext.dataset.base_dataset import CLSBaseDataset
+from .. import ClassFactory, ModuleType
 
 
+@ClassFactory.register(ModuleType.DATASET)
 class AgNewsDataset(CLSBaseDataset):
     """AgNews dataset load.
 

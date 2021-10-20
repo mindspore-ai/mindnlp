@@ -13,7 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """
-    CMNLI dataset
+    CSLDCP dataset
 """
 from typing import Union, Dict, List, Optional
 
@@ -21,8 +21,10 @@ import pandas as pd
 from pandas import DataFrame
 
 from mindtext.dataset.base_dataset import CLSBaseDataset
+from .. import ClassFactory, ModuleType
 
 
+@ClassFactory.register(ModuleType.DATASET)
 class CSLDCPDataset(CLSBaseDataset):
     """
     CSLDCP dataset.
@@ -38,9 +40,9 @@ class CSLDCPDataset(CLSBaseDataset):
         buckets (List[int], Optional): Padding row to the length of buckets, default None.
 
     Examples:
-       #>>> csldcp = CSLDCPDataset(path,tokenizer='cn-char', lang='en')
+       >>> csldcp = CSLDCPDataset(path,tokenizer='cn-char', lang='en')
          # csldcp = CSLDCPDataset(tokenizer='cn-char', lang='en')
-       #>>> data = csldcp()
+       >>> dataset = csldcp()
     """
 
     def __init__(self, paths: Optional[Union[str, Dict[str, str]]] = None,

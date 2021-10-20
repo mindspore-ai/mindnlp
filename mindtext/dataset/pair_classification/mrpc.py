@@ -26,8 +26,10 @@ import mindspore.dataset as ds
 
 from ..base_dataset import PairCLSBaseDataset
 from ..utils import get_split_func
+from .. import ClassFactory, ModuleType
 
 
+@ClassFactory.register(ModuleType.DATASET)
 class MRPCDataset(PairCLSBaseDataset):
     """
     MRPC dataset.
@@ -44,9 +46,9 @@ class MRPCDataset(PairCLSBaseDataset):
         train_ratio (float): The ratio of the train set and the ratio of dev set is 1-train_ratio,default 0.8.
 
     Examples:
-        >>> mrpc = MRPCDataset(path='dataset path',tokenizer='spacy', lang='en', train_ratio=0.8)
-        # mrpc = MRPCDataset(tokenizer='spacy', lang='en', buckets=[16,32,64])
-        >>> ds = mrpc()
+        >>> mrpc = MRPCDataset(tokenizer='spacy', lang='en', train_ratio=0.8, paths=Path to the dataset folder)
+          # mrpc = MRPCDataset(tokenizer='spacy', lang='en', buckets=[16,32,64])
+        >>> dataset = mrpc()
     """
 
     def __init__(self, paths: str, tokenizer: Union[str] = 'spacy', lang: str = 'en', max_size: Optional[int] = None,

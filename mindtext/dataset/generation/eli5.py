@@ -25,8 +25,10 @@ from transformers import PreTrainedTokenizerBase
 
 from .. import Vocabulary, Pad
 from ..base_dataset import GenerateBaseDataset
+from .. import ClassFactory, ModuleType
 
 
+@ClassFactory.register(ModuleType.DATASET)
 class ELI5Dataset(GenerateBaseDataset):
     """
     ELI5 dataset.
@@ -43,8 +45,8 @@ class ELI5Dataset(GenerateBaseDataset):
 
     Examples:
         >>> eli5 = ELI5Dataset(tokenizer='facebook/bart')
-        # eli5 = ELI5Dataset(tokenizer='facebook/bart')
-        >>> ds = eli5()
+          # eli5 = ELI5Dataset(tokenizer='facebook/bart')
+        >>> dataset = eli5()
     """
 
     def __init__(self, paths: Optional[str] = None, tokenizer: Union[str] = 'spacy', lang: str = 'en',

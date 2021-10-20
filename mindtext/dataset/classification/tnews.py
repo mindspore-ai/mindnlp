@@ -13,7 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """
-    CMNLI dataset
+    Tnews dataset
 """
 from typing import Union, Dict, List, Optional
 
@@ -22,10 +22,13 @@ from pandas import DataFrame
 
 from mindtext.dataset.base_dataset import CLSBaseDataset
 
+from .. import ClassFactory, ModuleType
 
+
+@ClassFactory.register(ModuleType.DATASET)
 class TnewsDataset(CLSBaseDataset):
     """
-    Iflytek dataset.
+    Tnews dataset.
 
     Args:
         paths (Union[str, Dict[str, str]], Optional): Dataset file path or Dataset directory path, default None.
@@ -38,13 +41,13 @@ class TnewsDataset(CLSBaseDataset):
         buckets (List[int], Optional): Padding row to the length of buckets, default None.
 
     Examples:
-       #>>> tnews = TnewsDataset(path,tokenizer='cn-char', lang='en')
-         # tnews = TnewsDataset(tokenizer='cn-char', lang='en')
-       #>>> data = tnews()
+       >>> tnews = TnewsDataset(path,tokenizer='cn-char')
+         # tnews = TnewsDataset(tokenizer='bert-base-chinese')
+       >>> dataset = tnews()
     """
 
     def __init__(self, paths: Optional[Union[str, Dict[str, str]]] = None,
-                 tokenizer: Union[str] = 'cn-char', lang: str = 'en', max_size: Optional[int] = None,
+                 tokenizer: Union[str] = 'cn-char', lang: str = 'chinese', max_size: Optional[int] = None,
                  min_freq: Optional[int] = None,
                  padding: str = '<pad>', unknown: str = '<unk>',
                  buckets: Optional[List[int]] = None, **kwargs):
@@ -67,18 +70,28 @@ class TnewsDataset(CLSBaseDataset):
 
     def _load(self, path: str) -> DataFrame:
         """
-                Load dataset from tnews file.
+            Load dataset from tnews file.
 
-                Args:
-                    path (str): Dataset file path.
+            Args:
+                path (str): Dataset file path.
 
-                Returns:
-                    DataFrame: Dataset file will be read as a DataFrame.
+            Returns:
+                DataFrame: Dataset file will be read as a DataFrame.
         """
         with open(path, 'r', encoding='utf-8') as f:
             dataset = pd.read_json(f, lines=True)
             if "label" in dataset.columns.values:
-                dataset = dataset[['label', 'label_desc', 'sentence', 'keywords', 'id']]
+                def label_cut(x):
+                    if x <= 104:
+                        x_cut = x - 100
+                    elif x >= 112:
+                        x_cut = x - 102
+                    else:
+                        x_cut = x - 101
+                    return x_cut
+
+                dataset = dataset[['label', 'label_desc', 'sentence', 'keywords']]
+                dataset['label'] = dataset['label'].map(label_cut)
             else:
                 dataset = dataset[['sentence', 'id']]
             dataset.fillna('')

@@ -20,8 +20,10 @@ import pandas as pd
 from pandas import DataFrame
 import mindspore.dataset as ds
 from ..base_dataset import CLSBaseDataset
+from .. import ClassFactory, ModuleType
 
 
+@ClassFactory.register(ModuleType.DATASET)
 class DBpediaDataset(CLSBaseDataset):
     """
     DBpedia dataset load.
@@ -38,8 +40,8 @@ class DBpediaDataset(CLSBaseDataset):
 
     Examples:
         >>> dbpedia = DBpediaDataset(tokenizer='spacy', lang='en')
-        # dbpedia = DBpediaDataset(tokenizer='spacy', lang='en', buckets=[16,32,64])
-        >>> ds = dbpedia()
+          # dbpedia = DBpediaDataset(tokenizer='spacy', lang='en', buckets=[16,32,64])
+        >>> dataset = dbpedia()
     """
 
     def __init__(self, paths: Optional[Union[str, Dict[str, str]]] = None,

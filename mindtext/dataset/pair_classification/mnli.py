@@ -26,8 +26,10 @@ import mindspore.dataset as ds
 
 from ..base_dataset import PairCLSBaseDataset
 from ..utils import get_split_func
+from .. import ClassFactory, ModuleType
 
 
+@ClassFactory.register(ModuleType.DATASET)
 class MNLIDataset(PairCLSBaseDataset):
     """
     MNLI dataset.
@@ -44,8 +46,8 @@ class MNLIDataset(PairCLSBaseDataset):
 
     Examples:
         >>> mnli = MNLIDataset(tokenizer='spacy', lang='en')
-        # mnli = MNLIDataset(tokenizer='spacy', lang='en', buckets=[16,32,64])
-        >>> ds = mnli()
+          # mnli = MNLIDataset(tokenizer='spacy', lang='en', buckets=[16,32,64])
+        >>> dataset = mnli()
     """
 
     def __init__(self, paths: Optional[Union[str, Dict[str, str]]] = None,

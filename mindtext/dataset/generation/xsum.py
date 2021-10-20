@@ -21,8 +21,10 @@ import pandas as pd
 from pandas import DataFrame
 
 from ..base_dataset import GenerateBaseDataset
+from .. import ClassFactory, ModuleType
 
 
+@ClassFactory.register(ModuleType.DATASET)
 class XSUMDataset(GenerateBaseDataset):
     """
     XSUM dataset.
@@ -39,8 +41,8 @@ class XSUMDataset(GenerateBaseDataset):
 
     Examples:
         >>> xsum = XSUMDataset(tokenizer='spacy', lang='en')
-        # xsum = XSUMDataset(tokenizer='spacy', lang='en', buckets=[16,32,64])
-        >>> ds = xsum()
+          # xsum = XSUMDataset(tokenizer='spacy', lang='en', buckets=[16,32,64])
+        >>> dataset = xsum()
     """
 
     def __init__(self, paths: Optional[str] = None, tokenizer: Union[str] = 'spacy', lang: str = 'en',

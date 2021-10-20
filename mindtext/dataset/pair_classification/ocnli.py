@@ -17,13 +17,14 @@
 """
 from typing import Union, Dict, List, Optional
 
-
 import pandas as pd
 from pandas import DataFrame
 
 from ..base_dataset import PairCLSBaseDataset
+from .. import ClassFactory, ModuleType
 
 
+@ClassFactory.register(ModuleType.DATASET)
 class OCNLIDataset(PairCLSBaseDataset):
     """
     OCNLI dataset.
@@ -39,16 +40,17 @@ class OCNLIDataset(PairCLSBaseDataset):
         buckets (List[int], Optional): Padding row to the length of buckets, default None.
 
     Examples:
-        >>> OCNLI = OCNLIDataset(tokenizer='spacy', lang='en')
-        # OCNLI = OCNLIDataset(tokenizer='spacy', lang='en', buckets=[16,32,64])
-        >>> ds = OCNLI()
+        >>> OCNLI = OCNLIDataset(tokenizer='cn-char')
+          # OCNLI = OCNLIDataset(tokenizer='bert-base-chinese')
+        >>> dataset = OCNLI()
     """
 
     def __init__(self, paths: Optional[Union[str, Dict[str, str]]] = None,
                  tokenizer: Union[str] = 'spacy', lang: str = 'en', max_size: Optional[int] = None,
                  min_freq: Optional[int] = None, padding: str = '<pad>', unknown: str = '<unk>',
                  buckets: Optional[List[int]] = None, **kwargs):
-        super(OCNLIDataset, self).__init__(sep='\t', name='OCNLI', **kwargs)
+        super(OCNLIDataset, self).__init__(sep='\t', name='OCNLI',
+                                           label_map={'contradiction': 0, 'neutral': 1, 'entailment': 2}, **kwargs)
         self._paths = paths
         self._tokenize = tokenizer
         self._lang = lang
@@ -63,7 +65,7 @@ class OCNLIDataset(PairCLSBaseDataset):
         self.process(tokenizer=self._tokenize, lang=self._lang, max_size=self._vocab_max_size,
                      min_freq=self._vocab_min_freq, padding=self._padding,
                      unknown=self._unknown, buckets=self._buckets)
-        return self.mind_datasets
+        return self._mind_datasets
 
     def _load(self, path: str) -> DataFrame:
         """
@@ -81,6 +83,7 @@ class OCNLIDataset(PairCLSBaseDataset):
                 dataset = dataset[
                     ['id', 'level', 'label', 'label0', 'label1', 'label2', 'label3', 'label4', 'sentence1',
                      'sentence2', 'genre']]
+                dataset.drop(dataset[dataset.label.isin(['-'])].index, inplace=True)
             else:
                 dataset = dataset[['id', 'sentence1', 'sentence2']]
         return dataset

@@ -23,8 +23,10 @@ from pandas import DataFrame
 import mindspore.dataset as ds
 
 from ..base_dataset import CLSBaseDataset
+from .. import ClassFactory, ModuleType
 
 
+@ClassFactory.register(ModuleType.DATASET)
 class ChnSentiCorpDataset(CLSBaseDataset):
     """
     ChnSentiCorp dataset load.
@@ -39,8 +41,8 @@ class ChnSentiCorpDataset(CLSBaseDataset):
         unknown (str): Unknown token,default `<unk>`.
         buckets (List[int], Optional): Padding row to the length of buckets, default None.
     Examples:
-        ChnSentiCorp = ChnSentiCorpDataset(tokenizer='spacy', lang='en',paths=Path to the dataset folder)
-        ds = ChnSentiCorp()
+        >>> ChnSentiCorp = ChnSentiCorpDataset(tokenizer='spacy', lang='en',paths=Path to the dataset folder)
+        >>> dataset = ChnSentiCorp()
     """
 
     def __init__(self, paths: Optional[Union[str, Dict[str, str]]] = None,

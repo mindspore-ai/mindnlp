@@ -24,8 +24,10 @@ from pandas import DataFrame
 
 from ..base_dataset import PairCLSBaseDataset
 from ..utils import get_split_func
+from .. import ClassFactory, ModuleType
 
 
+@ClassFactory.register(ModuleType.DATASET)
 class STSBDataset(PairCLSBaseDataset):
     """
     STS-B dataset.
@@ -42,8 +44,8 @@ class STSBDataset(PairCLSBaseDataset):
 
     Examples:
         >>> sts = STSBDataset(tokenizer='spacy', lang='en')
-        # stsb = STSBDataset(tokenizer='spacy', lang='en', buckets=[16,32,64])
-        >>> ds = sts()
+          # sts = STSBDataset(tokenizer='spacy', lang='en', buckets=[16,32,64])
+        >>> dataset = sts()
     """
 
     def __init__(self, paths: Optional[Union[str, Dict[str, str]]] = None,

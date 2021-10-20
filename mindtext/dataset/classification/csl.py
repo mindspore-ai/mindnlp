@@ -13,7 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """
-    CMNLI dataset
+    CSL dataset
 """
 from typing import Union, Dict, List, Optional
 
@@ -21,8 +21,10 @@ import pandas as pd
 from pandas import DataFrame
 
 from mindtext.dataset.base_dataset import CLSBaseDataset
+from .. import ClassFactory, ModuleType
 
 
+@ClassFactory.register(ModuleType.DATASET)
 class CSLDataset(CLSBaseDataset):
     """
     CSL dataset.
@@ -38,9 +40,9 @@ class CSLDataset(CLSBaseDataset):
         buckets (List[int], Optional): Padding row to the length of buckets, default None.
 
     Examples:
-       #>>> csl = CSLDataset(path,tokenizer='cn-char', lang='en')
+       >>> csl = CSLDataset(path,tokenizer='cn-char', lang='en')
          # csl = CSLDataset(tokenizer='cn-char', lang='en')
-       #>>> data = csl()
+       >>> data = csl()
     """
 
     def __init__(self, paths: Optional[Union[str, Dict[str, str]]] = None,

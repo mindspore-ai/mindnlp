@@ -22,11 +22,13 @@ import pandas as pd
 from pandas import DataFrame
 
 from ..base_dataset import PairCLSBaseDataset
+from .. import ClassFactory, ModuleType
 
 
+@ClassFactory.register(ModuleType.DATASET)
 class AMADataset(PairCLSBaseDataset):
     """
-    AFQMC dataset.
+    Ama dataset.
 
     Args:
         paths (Union[str, Dict[str, str]], Optional): Dataset file path or Dataset directory path, default None.
@@ -39,9 +41,9 @@ class AMADataset(PairCLSBaseDataset):
         buckets (List[int], Optional): Padding row to the length of buckets, default None.
 
     Examples:
-        >>> afqmc = AMADataset(tokenizer='spacy', lang='en')
-        # afqmc = AFQMCDataset(tokenizer='spacy', lang='en', buckets=[16,32,64])
-        >>> ds = ama()
+        >>> ama = AMADataset(tokenizer='spacy', lang='en')
+          # ama = AMADataset(tokenizer='spacy', lang='en', buckets=[16,32,64])
+        >>> dataset = ama()
     """
 
     def __init__(self, paths: Optional[Union[str, Dict[str, str]]] = None,

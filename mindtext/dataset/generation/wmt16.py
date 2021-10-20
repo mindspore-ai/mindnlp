@@ -27,6 +27,7 @@ from ..base_dataset import GenerateBaseDataset
 from ..utils import check_loader_paths
 from ..utils import _preprocess_sequentially, get_tokenizer, _get_dataset_type
 from .. import Vocabulary, Pad
+from .. import ClassFactory, ModuleType
 
 LANGUAGE_PAIRS = ['ro-en', 'de-en']
 LANGUAGE_PAIRS_TRANS = []
@@ -35,9 +36,10 @@ for i in LANGUAGE_PAIRS:
     LANGUAGE_PAIRS_TRANS.append(b + '-' + a)
 
 
+@ClassFactory.register(ModuleType.DATASET)
 class WMT16Dataset(GenerateBaseDataset):
     """
-    Ro-En dataset.
+    WMT16 dataset.
 
     Args:
         path (str, Optional): Dataset file path or Dataset directory path, default None.
@@ -51,9 +53,9 @@ class WMT16Dataset(GenerateBaseDataset):
 
     Examples:
         >>> wmt16 = WMT16Dataset(tokenizer='facebook/bart', language_pairs='ro-en')
-        # wmt16 = WMT16Dataset(tokenizer='facebook/bart', language_pairs='ro-en')
-        # wmt16 = WMT16Dataset(language_pairs='ro-en')
-        >>> ds = wmt16()
+          # wmt16 = WMT16Dataset(tokenizer='facebook/bart', language_pairs='ro-en')
+          # wmt16 = WMT16Dataset(language_pairs='ro-en')
+        >>> dataset = wmt16()
     """
 
     def __init__(self, paths: Optional[str] = None, tokenizer: Union[str] = 'spacy', lang: str = 'en',

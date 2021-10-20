@@ -22,8 +22,10 @@ import pandas as pd
 from pandas import DataFrame
 
 from ..base_dataset import PairCLSBaseDataset
+from .. import ClassFactory, ModuleType
 
 
+@ClassFactory.register(ModuleType.DATASET)
 class LCQMCDataset(PairCLSBaseDataset):
     """
     LCQMC dataset.
@@ -40,8 +42,8 @@ class LCQMCDataset(PairCLSBaseDataset):
 
     Examples:
         >>> lcqmc = LCQMCDataset(tokenizer='spacy', lang='en')
-        # lcqmc = LCQMCDataset(tokenizer='spacy', lang='en', buckets=[16,32,64])
-        >>> ds = lcqmc()
+          # lcqmc = LCQMCDataset(tokenizer='spacy', lang='en', buckets=[16,32,64])
+        >>> dataset = lcqmc()
     """
 
     def __init__(self, paths: Optional[Union[str, Dict[str, str]]] = None,

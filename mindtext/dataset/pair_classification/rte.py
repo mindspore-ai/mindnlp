@@ -18,8 +18,10 @@
 from typing import Union, Dict, Optional
 
 from ..base_dataset import PairCLSBaseDataset
+from .. import ClassFactory, ModuleType
 
 
+@ClassFactory.register(ModuleType.DATASET)
 class RTEDataset(PairCLSBaseDataset):
     """
     RTE dataset.
@@ -36,8 +38,8 @@ class RTEDataset(PairCLSBaseDataset):
 
     Examples:
         >>> rte = RTEDataset(tokenizer='spacy', lang='en')
-        # rte = RTEDataset(tokenizer='spacy', lang='en', buckets=[16,32,64])
-        >>> ds = rte()
+          # rte = RTEDataset(tokenizer='spacy', lang='en', buckets=[16,32,64])
+        >>> dataset = rte()
     """
 
     def __init__(self, paths: Optional[Union[str, Dict[str, str]]] = None,

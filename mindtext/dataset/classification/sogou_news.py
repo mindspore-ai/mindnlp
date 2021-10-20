@@ -12,15 +12,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-"""SogouNewsDataset class"""
+"""
+    SogouNewsDataset class
+"""
 from typing import Union, Dict, Optional
+
 from tqdm import tqdm
 import pandas as pd
 from pandas import DataFrame
 import mindspore.dataset as ds
+
 from ..base_dataset import CLSBaseDataset
+from .. import ClassFactory, ModuleType
 
 
+@ClassFactory.register(ModuleType.DATASET)
 class SogouNewsDataset(CLSBaseDataset):
     """
     SogouNews dataset load.

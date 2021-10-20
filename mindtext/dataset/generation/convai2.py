@@ -25,8 +25,10 @@ from transformers import PreTrainedTokenizerBase
 from mindspore.mindrecord import FileWriter
 
 from ..base_dataset import Dataset
+from .. import ClassFactory, ModuleType
 
 
+@ClassFactory.register(ModuleType.DATASET)
 class Convai2Dataset(Dataset):
     """
     Convai2 dataset.
@@ -43,7 +45,7 @@ class Convai2Dataset(Dataset):
 
     Examples:
         >>> c2 = Convai2Dataset()
-        >>> ds = c2()
+        >>> dataset = c2()
     """
 
     def __init__(self, paths: Optional[str] = None, tokenizer: Union[str] = 'facebook/bart-large', lang: str = None,

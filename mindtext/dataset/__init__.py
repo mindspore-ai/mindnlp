@@ -15,7 +15,21 @@
 """
     Dataset init
 """
+from os.path import dirname, join, split, splitext
+from glob import glob
+from keyword import iskeyword
+
 from ..common import Vocabulary, Pad
-from .classification import SST2Dataset, CoLADataset, ChnSentiCorpDataset, DBpediaDataset
-from .pair_classification import RTEDataset, MNLIDataset, QQPDataset, MRPCDataset, QNLIDataset, AFQMCDataset, LCQMCDataset
-from .regression import STSBDataset
+from ..common.utils.class_factory import ClassFactory, ModuleType
+
+DATASET_CLS = ['classification', 'pair_classification', 'regression', 'tagging', 'reading_comprehension', 'generation']
+
+for dataset_class in DATASET_CLS:
+    basedir = join(dirname(__file__), dataset_class)
+
+    for name in glob(join(basedir, '*.py')):
+        module = splitext(split(name)[-1])[0]
+        if not module.startswith('_') and \
+                module.isidentifier() and \
+                not iskeyword(module):
+            __import__(__name__ + '.' + dataset_class + '.' + module)

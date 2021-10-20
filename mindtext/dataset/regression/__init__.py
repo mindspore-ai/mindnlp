@@ -15,4 +15,3 @@
 """
     regression init
 """
-from .sts import STSBDataset
