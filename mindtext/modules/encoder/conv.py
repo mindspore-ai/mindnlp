@@ -54,7 +54,7 @@ class ConvEncoder(nn.Cell):
                 nn.Conv1d(num_filters, num_filters, kernel_size)
             ))
         self.pool = nn.MaxPool1d(kernel_size=3, stride=2)
-        self.embed_drop = nn.Dropout(embed_dropout)
+        self.embed_drop = nn.Dropout(1-embed_dropout)
 
     def construct(self, words):
         x = self.region_embed(words)

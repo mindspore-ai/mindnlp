@@ -38,9 +38,9 @@ class Model:
         self.loss = loss
         self.optimizer = optimizer
         self.metrics = metrics
-        if net.backbone.__class__.__name__ not in MODEL_LIST.keys():
+        if net.__class__.__name__ not in MODEL_LIST.keys():
             raise ValueError("model not found in {}".format(MODEL_LIST.keys()))
-        self.model_train, self.model_infer = MODEL_LIST[net.backbone.__class__.__name__]
+        self.model_train, self.model_infer = MODEL_LIST[net.__class__.__name__]
         self.infer_model = self.model_infer(self.net)
 
     def train(self, epoch, train_dataset, callbacks, dataset_sink_mode=False):
@@ -58,7 +58,7 @@ class Model:
         label_name = None
         for batch in tqdm(dataset.create_dict_iterator(output_numpy=True, num_epochs=1),
                           total=dataset.get_dataset_size()):
-            if inputs_name:
+            if not inputs_name:
                 inputs_name = list(batch.keys())[0:-1]
                 label_name = list(batch.keys())[-1]
             target_sens.append(batch[label_name])

@@ -77,10 +77,12 @@ class DPCNN(nn.Cell):
                                    config.model.encoder.num_layers, config.model.encoder.embed_dropout)
         self.decoder = NormalDecoder(config.model.decoder.num_filters, config.model.decoder.num_classes,
                                      config.model.decoder.classes_dropout)
+        self.cast = P.Cast()
 
     def construct(self, words):
         x = self.encoder(words)
         x = self.decoder(x)
+        x = self.cast(x, mstype.float32)
         return x
 
 
@@ -98,12 +100,10 @@ class DPCNNNetWithLoss(nn.Cell):
         self.dpcnn = net
         self.loss_func = loss
         self.squeeze = P.Squeeze(axis=1)
-        self.argmax = P.ArgMaxWithValue(axis=1)
         self.print = P.Print()
 
     def construct(self, src_tokens, label_idx):
         predict_score = self.dpcnn(src_tokens)
-        predict_score = self.argmax(predict_score)[0].astype(mstype.float32)
         label_idx = self.squeeze(label_idx)
         predict_score = self.loss_func(predict_score, label_idx)
         return predict_score
