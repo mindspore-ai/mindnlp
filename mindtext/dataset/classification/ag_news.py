@@ -46,7 +46,8 @@ class AgNewsDataset(CLSBaseDataset):
     def __init__(self, paths: Union[str, Dict[str, str]] = None, tokenizer: Union[str] = 'spacy',
                  lang: str = 'en', max_size: int = None, min_freq: int = None, padding: str = '<pad>',
                  unknown: str = '<unk>', **kwargs):
-        super(AgNewsDataset, self).__init__(sep=',', name='AgNews', **kwargs)
+        super(AgNewsDataset, self).__init__(sep=',', name='AgNews', label_map={4: 3, 3: 2, 2: 1, 1: 0},
+                                            **kwargs)
         self._paths = paths
         self._tokenize = tokenizer
         self._lang = lang
