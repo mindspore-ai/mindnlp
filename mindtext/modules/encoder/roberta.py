@@ -15,10 +15,8 @@
 import copy
 import math
 from typing import Tuple
-import six
 import yaml
 import numpy as np
-
 import mindspore
 import mindspore.common.dtype as mstype
 import mindspore.nn as nn
@@ -37,29 +35,29 @@ class RobertaConfig:
         seq_length (int): Length of input sequence. Default: 128.
         vocab_size (int): The shape of each embedding vector. Default: 32000.
         hidden_size (int): Size of the bert encoder layers. Default: 768.
-        num_hidden_layers (int): Number of hidden layers in the BertTransformer encoder
+        num_hidden_layers (int): Number of hidden layers in the RobertaTransformer encoder
                            cell. Default: 12.
-        num_attention_heads (int): Number of attention heads in the BertTransformer
+        num_attention_heads (int): Number of attention heads in the RobertaTransformer
                              encoder cell. Default: 12.
-        intermediate_size (int): Size of intermediate layer in the BertTransformer
+        intermediate_size (int): Size of intermediate layer in the RobertaTransformer
                            encoder cell. Default: 3072.
-        hidden_act (str): Activation function used in the BertTransformer encoder
+        hidden_act (str): Activation function used in the RobertaTransformer encoder
                     cell. Default: "gelu".
-        hidden_dropout_prob (float): The dropout probability for BertOutput. Default: 0.1.
+        hidden_dropout_prob (float): The dropout probability for RobertaOutput. Default: 0.1.
         attention_probs_dropout_prob (float): The dropout probability for
-                                      BertAttention. Default: 0.1.
+                                      RobertaAttention. Default: 0.1.
         max_position_embeddings (int): Maximum length of sequences used in this
                                  model. Default: 512.
         type_vocab_size (int): Size of token type vocab. Default: 16.
         initializer_range (float): Initialization value of TruncatedNormal. Default: 0.02.
         dtype (:class:`mindspore.dtype`): Data type of the input. Default: mstype.float32.
-        compute_type (:class:`mindspore.dtype`): Compute type in BertTransformer.
+        compute_type (:class:`mindspore.dtype`): Compute type in RobertaTransformer.
                                         Default: mstype.float32.
     """
 
     def __init__(self,
                  seq_length: int = 128,
-                 vocab_size: int = 32000,
+                 vocab_size: int = 50265,
                  hidden_size: int = 768,
                  num_hidden_layers: int = 12,
                  num_attention_heads: int = 12,
@@ -67,8 +65,8 @@ class RobertaConfig:
                  hidden_act: str = "gelu",
                  hidden_dropout_prob: float = 0.1,
                  attention_probs_dropout_prob: float = 0.1,
-                 max_position_embeddings: int = 512,
-                 type_vocab_size: int = 16,
+                 max_position_embeddings: int = 514,
+                 type_vocab_size: int = 1,
                  initializer_range: float = 0.02,
                  dtype: mstype = mstype.float32,
                  compute_type: mstype = mstype.float32):
@@ -93,7 +91,7 @@ class RobertaConfig:
         Args:
            yaml_object : a yaml object  contains the parameters in the YAMl file.
         Returns:
-            config : a Robertaconfig object that  contains the parameters.
+            config : a RobertaConfig object that  contains the parameters.
         """
         config = RobertaConfig()
         for (key, value) in yaml_object.items():
@@ -106,7 +104,7 @@ class RobertaConfig:
         Args:
            yaml_file : Path to the YAML file.
         Returns:
-           cls.from_dict : a Robertaconfig object that  contains the parameters.
+           cls.from_dict : a RobertaConfig object that  contains the parameters.
         """
         f = open(yaml_file, 'r', encoding='utf-8')
         cont = f.read()
@@ -176,83 +174,8 @@ class EmbeddingLookup(nn.Cell):
         return output, self.embedding_table
 
 
-def assert_rank(tensor: Tensor, expected_rank: list, name: str = "input") -> None:
-    """Raises an exception if the tensor rank is not of the expected rank.
-
-    Args:
-      tensor: A Tensor to check the rank of.
-      expected_rank: Python integer or list of integers, expected rank.
-      name: Optional name of the tensor for the error message.
-    Raises:
-      ValueError: If the expected shape doesn't match the actual shape.
-    """
-
-    expected_rank_dict = {}
-    if isinstance(expected_rank, six.integer_types):
-        expected_rank_dict[expected_rank] = True
-    else:
-        for integer in expected_rank:
-            expected_rank_dict[integer] = True
-
-    actual_rank = len(tensor.shape)
-    if actual_rank not in expected_rank_dict:
-        raise ValueError(
-            "For the tensor `%s` , the actual rank "
-            "`%d` (shape = %s) is not equal to the expected rank `%s`" %
-            (name, actual_rank, str(tensor.shape), str(expected_rank)))
-
-
-def get_shape_list(tensor: Tensor, expected_rank: list = None, name: str = "input") -> list:
-    """Returns a list of the shape of tensor, preferring static dimensions.
-
-    Args:
-      tensor: A Tensor object to find the shape of.
-      expected_rank: (optional) int. The expected rank of `tensor`. If this is
-        specified and the `tensor` has a different rank, and exception will be
-        thrown.
-      name: Optional name of the tensor for the error message.
-
-    Returns:
-      out_shape: A list of dimensions of the shape of tensor. All static dimensions will
-      be returned as python integers, and dynamic dimensions will be returned
-      as Tensor scalars.
-    """
-
-    if expected_rank:
-        assert_rank(tensor, expected_rank, name)
-
-    shape = tensor.shape
-
-    out_shape = []
-    for dim in enumerate(shape):
-        out_shape.append(dim)
-    return out_shape
-
-
-def reshape_to_matrix(input_tensor: Tensor) -> Tensor:
-    """Reshapes a >= rank 2 tensor to a rank 2 tensor (i.e., a matrix).
-    Args:
-        input_tensor:a >= rank 2 tensor.
-
-    Returns:
-         output_tensor:a rank 2 tensor (i.e., a matrix).
-
-    """
-    ndims = len(input_tensor.shape)
-    if ndims < 2:
-        raise ValueError("Input tensor must have at least rank 2. Shape = %s" %
-                         (input_tensor.shape))
-    if ndims == 2:
-        return input_tensor
-
-    width = input_tensor.shape[-1]
-
-    output_tensor = P.Reshape()(input_tensor, [-1, width])
-    return output_tensor
-
-
-class RobertaEmbedding(nn.Cell):
-    """Same as BertEmbeddings with a tiny tweak for positional embeddings indexing.
+class EmbeddingPostprocessor(nn.Cell):
+    """Same as RobertaEmbeddings with a tiny tweak for positional embeddings indexing.
 
     Args:
         embedding_size (int): The size of each embedding vector.
@@ -262,7 +185,6 @@ class RobertaEmbedding(nn.Cell):
         token_type_vocab_size (int): Size of token type vocab. Default: 16.
         use_one_hot_embeddings (bool): Specifies whether to use one hot encoding form.
                             Default: False.
-        initializer_range (float): Initialization value of TruncatedNormal. Default: 0.02.
         max_position_embeddings (int): Maximum length of sequences used in this
                                  model. Default: 512.
         dropout_prob (float): The dropout probability. Default: 0.1.
@@ -276,7 +198,7 @@ class RobertaEmbedding(nn.Cell):
                  use_one_hot_embeddings: bool = False,
                  max_position_embeddings: int = 512,
                  dropout_prob: float = 0.1):
-        super(RobertaEmbedding, self).__init__()
+        super(EmbeddingPostprocessor, self).__init__()
         self.use_token_type = use_token_type
         self.token_type_vocab_size = token_type_vocab_size
         self.use_one_hot_embeddings = use_one_hot_embeddings
@@ -295,50 +217,51 @@ class RobertaEmbedding(nn.Cell):
         self.dropout = nn.Dropout(1 - dropout_prob)
         self.gather = P.Gather()
         self.slice = P.StridedSlice()
-        self.padding_idx = 1
+        _, seq, _ = self.shape
         self.full_position_embedding = nn.Embedding(
             vocab_size=max_position_embeddings,
             embedding_size=embedding_size,
-            padding_idx=self.padding_idx,
             use_one_hot=False)
         self.layernorm = nn.LayerNorm((embedding_size,))
         self.add = P.Add()
 
-    def construct(self, input_ids: Tensor, token_type_ids: Tensor, word_embeddings: Tensor) -> Tensor:
+    def construct(self, input_ids: Tensor, word_embeddings: Tensor) -> Tensor:
         """Postprocessors apply positional and token type embeddings to word embeddings.
-           Args: token_type_ids:The tensor vector with the segment id.
+           Args: input_ids:input_ids(Tensor vector):
+                 A vector containing the transformation of characters into corresponding ids.
                  word_embeddings:Word embedding vector.
-
            Returns:
                 output:A embedding vector that fuses a word embedding vector
                 with a position embedding vector or segment embedding vector.
 
         """
         output = word_embeddings
-        position_ids = self.create_position_ids_from_input_ids(input_ids)
-        if self.use_token_type:
-            token_type_embeddings = self.token_type_embedding(token_type_ids)
-            output = self.add(output, token_type_embeddings)
+        position_ids = create_position_ids_from_input_ids(input_ids,padding_idx=0)
+        position_ids = position_ids.astype(mstype.int32)
         position_embeddings = self.full_position_embedding(position_ids)
         output = self.add(output, position_embeddings)
         output = self.layernorm(output)
         output = self.dropout(output)
         return output
 
-    def create_position_ids_from_input_ids(self, x: Tensor) -> Tensor:
-        """
-        Replace non-padding symbols with their position numbers. Position numbers begin at
-        padding_idx+1. Padding symbols are ignored.
+def create_position_ids_from_input_ids(input_ids: Tensor, padding_idx=0 ) -> Tensor:
+    """
+    Replace non-padding symbols with their position numbers. Position numbers begin at
+    padding_idx+1. Padding symbols are ignored.
 
-        Args:
-            x: A format in torch.Tensor.
+    Args:
+       input_ids:input_ids(Tensor vector):
+       A vector containing the transformation of characters into corresponding ids.
 
-        Returns:
-            output: A tensor after add padding_idx.
-        """
-        mask = x.ne(self.padding_idx).long()
-        incremental_indicies = mindspore.ops.CumSum(mask, 1) * mask
-        return incremental_indicies + self.padding_idx
+    Returns:
+       output: A tensor after add padding_idx.
+    """
+    mask = input_ids != padding_idx
+    mask = (1.0 * mask)
+
+    cumsum = mindspore.ops.CumSum()
+    incremental_indicies = cumsum(mask, 1) * mask
+    return incremental_indicies + padding_idx
 
 
 class EncoderOutput(nn.Cell):
@@ -350,7 +273,7 @@ class EncoderOutput(nn.Cell):
         out_channels (int): Output channels.
         initializer_range (float): Initialization value of TruncatedNormal. Default: 0.02.
         dropout_prob (float): The dropout probability. Default: 0.1.
-        compute_type (:class:`mindspore.dtype`): Compute type in BertTransformer.
+        compute_type (:class:`mindspore.dtype`): Compute type in RobertaTransformer.
                                         Default: mstype.float32.
     """
 
@@ -360,7 +283,7 @@ class EncoderOutput(nn.Cell):
                  initializer_range: float = 0.02,
                  dropout_prob: float = 0.1,
                  compute_type: mstype = mstype.float32):
-        super(EncoderOutput, self).__init__()
+        super().__init__()
         self.dense = nn.Dense(in_channels, out_channels,
                               weight_init=TruncatedNormal(initializer_range)).to_float(compute_type)
         self.dropout = nn.Dropout(1 - dropout_prob)
@@ -384,11 +307,37 @@ class EncoderOutput(nn.Cell):
         output = self.layernorm(output)
         return output
 
+class SaturateCast(nn.Cell):
+    """
+    Performs a safe saturating cast. This operation applies proper clamping before casting to prevent
+    the danger that the value will overflow or underflow.
 
-class AttentionLayer(nn.Cell):
-    """ Layer for attention.
+    Args:
+        dst_type (:class:`mindspore.dtype`): The type of the elements of the output tensor. Default: mstype.float32.
+    """
+    def __init__(self, dst_type=mstype.float32):
+        super(SaturateCast, self).__init__()
+        np_type = mstype.dtype_to_nptype(dst_type)
 
-  Args:
+        self.tensor_min_type = float(np.finfo(np_type).min)
+        self.tensor_max_type = float(np.finfo(np_type).max)
+
+        self.min_op = P.Minimum()
+        self.max_op = P.Maximum()
+        self.cast = P.Cast()
+        self.dst_type = dst_type
+
+    def construct(self, x):
+        out = self.max_op(x, self.tensor_min_type)
+        out = self.min_op(out, self.tensor_max_type)
+        return self.cast(out, self.dst_type)
+
+
+class RobertaAttention(nn.Cell):
+    """
+    Apply multi-headed attention from "from_tensor" to "to_tensor".
+
+    Args:
         from_tensor_width (int): Size of last dim of from_tensor.
         to_tensor_width (int): Size of last dim of to_tensor.
         from_seq_length (int): Length of from_tensor sequence.
@@ -400,67 +349,44 @@ class AttentionLayer(nn.Cell):
         value_act (str): Activation function for the value transform. Default: None.
         has_attention_mask (bool): Specifies whether to use attention mask. Default: False.
         attention_probs_dropout_prob (float): The dropout probability for
-                                      BertAttention. Default: 0.0.
-        use_one_hot_embeddings (bool): Specifies whether to use one hot encoding form. Default: False.
+                                      RobertaAttention. Default: 0.0.
         initializer_range (float): Initialization value of TruncatedNormal. Default: 0.02.
         do_return_2d_tensor (bool): True for return 2d tensor. False for return 3d
                              tensor. Default: False.
-        compute_type (:class:`mindspore.dtype`): Compute type in BertAttention. Default: mstype.float32.
-
+        use_relative_positions (bool): Specifies whether to use relative positions. Default: False.
+        compute_type (:class:`mindspore.dtype`): Compute type in RobertaAttention. Default: mstype.float32.
     """
-    def __init__(self, from_tensor_width: int,
-                 to_tensor_width: int,
-                 num_attention_heads: int = 1,
-                 size_per_head: int = 512,
-                 has_attention_mask: bool = True,
-                 query_act: str = None,
-                 key_act: str = None,
-                 value_act: str = None,
-                 attention_probs_dropout_prob: float = 0.0,
-                 initializer_range: float = 0.02,
-                 do_return_2d_tensor: bool = False,
-                 batch_size: int = None,
-                 from_seq_length: int = None,
-                 to_seq_length: int = None,
-                 compute_type: mstype = mstype.float32):
-        super(AttentionLayer, self).__init__()
-        self.from_tensor_width = from_tensor_width
-        self.to_tensor_width = to_tensor_width
-        self.num_attention_heads = num_attention_heads
-        self.size_per_head = size_per_head
-        self.query_act = query_act
-        self.key_act = key_act
-        self.value_act = value_act
-        self.attention_probs_dropout_prob = attention_probs_dropout_prob
-        self.initializer_range = initializer_range
-        self.do_return_2d_tensor = do_return_2d_tensor
-        self.batch_size = batch_size
+    def __init__(self,
+                 from_tensor_width,
+                 to_tensor_width,
+                 from_seq_length,
+                 to_seq_length,
+                 num_attention_heads=1,
+                 size_per_head=512,
+                 query_act=None,
+                 key_act=None,
+                 value_act=None,
+                 has_attention_mask=False,
+                 attention_probs_dropout_prob=0.0,
+                 initializer_range=0.02,
+                 do_return_2d_tensor=False,
+                 use_relative_positions=False,
+                 compute_type=mstype.float32):
+
+        super(RobertaAttention, self).__init__()
         self.from_seq_length = from_seq_length
         self.to_seq_length = to_seq_length
-        self.reshape = P.Reshape()
-        self.transpose = P.Transpose()
-        self.matmul_trans_b = P.BatchMatMul(transpose_b=True)
-        self.matmul = P.BatchMatMul()
-        self.multiply = P.Mul()
-        self.softmax = nn.Softmax()
-        self.dropout = nn.Dropout(1 - attention_probs_dropout_prob)
-        self.multiply_data = -10000.0
-        self.trans_shape = (0, 2, 1, 3)
-        self.matmul_trans_b = P.BatchMatMul(transpose_b=True)
-        self.shape_to = (-1, to_seq_length, num_attention_heads, size_per_head)
-        units = num_attention_heads * size_per_head
-        weight = TruncatedNormal(initializer_range)
+        self.num_attention_heads = num_attention_heads
+        self.size_per_head = size_per_head
         self.has_attention_mask = has_attention_mask
-        if self.has_attention_mask:
-            self.expand_dims = P.ExpandDims()
-            self.sub = P.Sub()
-            self.add = P.Add()
-            self.cast = P.Cast()
-            self.get_dtype = P.DType()
-        if do_return_2d_tensor:
-            self.shape_return = (-1, num_attention_heads * size_per_head)
-        else:
-            self.shape_return = (-1, from_seq_length, num_attention_heads * size_per_head)
+        self.use_relative_positions = use_relative_positions
+
+        self.scores_mul = 1.0 / math.sqrt(float(self.size_per_head))
+        self.reshape = P.Reshape()
+        self.shape_from_2d = (-1, from_tensor_width)
+        self.shape_to_2d = (-1, to_tensor_width)
+        weight = TruncatedNormal(initializer_range)
+        units = num_attention_heads * size_per_head
         self.query_layer = nn.Dense(from_tensor_width,
                                     units,
                                     activation=query_act,
@@ -474,84 +400,63 @@ class AttentionLayer(nn.Cell):
                                     activation=value_act,
                                     weight_init=weight).to_float(compute_type)
 
-    def transpose_for_scores(self, input_tensor: Tensor, batch_size: int, num_attention_heads: int,
-                             seq_length: int, width: int) -> Tensor:
-        """do the transpose for the attention score.
+        self.shape_from = (-1, from_seq_length, num_attention_heads, size_per_head)
+        self.shape_to = (-1, to_seq_length, num_attention_heads, size_per_head)
 
-         Args:
-             input_tensor:the input tensor.
-             batch_size: batch size.
-             num_attention_heads:the number of attention of heads.
-             seq_length:sequcence length.
-             width:embedding dimension.
-         Returns:
-               output_tensor:transposed input tensor.
-         """
-        output_tensor = self.reshape(
-            input_tensor, tuple((batch_size, seq_length, num_attention_heads, width)))
-        input_perm = (0, 2, 1, 3)
-        output_tensor = self.transpose(output_tensor, input_perm)
-        return output_tensor
+        self.matmul_trans_b = P.BatchMatMul(transpose_b=True)
+        self.multiply = P.Mul()
+        self.transpose = P.Transpose()
+        self.trans_shape = (0, 2, 1, 3)
+        self.trans_shape_relative = (2, 0, 1, 3)
+        self.trans_shape_position = (1, 2, 0, 3)
+        self.multiply_data = -10000.0
+        self.matmul = P.BatchMatMul()
 
-    def construct(self, from_tensor: Tensor, to_tensor: Tensor, attention_mask: Tensor = None) -> Tensor:
-        """construct attention layer.
-           Args:
-                from_tensor:encoder sequence.
-                to_tensor:decoder sequence.
-                attention_mask:mask for attention.
+        self.softmax = nn.Softmax()
+        self.dropout = nn.Dropout(1 - attention_probs_dropout_prob)
 
-           Returns:
-                context_layer:the attention for the layer.
-        """
-        from_shape = get_shape_list(from_tensor, expected_rank=[2, 3])
-        to_shape = get_shape_list(to_tensor, expected_rank=[2, 3])
-        if len(from_shape) != len(to_shape):
-            raise ValueError(
-                "The rank of `from_tensor` must match the rank of `to_tensor`.")
+        if self.has_attention_mask:
+            self.expand_dims = P.ExpandDims()
+            self.sub = P.Sub()
+            self.add = P.Add()
+            self.cast = P.Cast()
+            self.get_dtype = P.DType()
+        if do_return_2d_tensor:
+            self.shape_return = (-1, num_attention_heads * size_per_head)
+        else:
+            self.shape_return = (-1 , from_seq_length, num_attention_heads * size_per_head)
 
-        if len(from_shape) == 3:
-            self.batch_size = from_shape[0]
-            self.from_seq_length = from_shape[1]
-            self.to_seq_length = to_shape[1]
-        elif len(from_shape) == 2:
-            if (not self.batch_size  or not self.from_seq_length
-                    or not self.to_seq_length):
-                raise ValueError(
-                    "When passing in rank 2 tensors to attention_layer, the values "
-                    "for `batch_size`, `from_seq_length`, and `to_seq_length` "
-                    "must all be specified.")
+        self.cast_compute_type = SaturateCast(dst_type=compute_type)
 
-        # Scalar dimensions referenced here:
-        #   B = batch size (number of sequences)
-        #   F = `from_tensor` sequence length
-        #   T = `to_tensor` sequence length
-        #   N = `num_attention_heads`
-        #   H = `size_per_head`
-        from_tensor_2d = reshape_to_matrix(from_tensor)
-        to_tensor_2d = reshape_to_matrix(to_tensor)
+
+    def construct(self, from_tensor, to_tensor, attention_mask):
+        """reshape 2d/3d input tensors to 2d"""
+        from_tensor_2d = self.reshape(from_tensor, self.shape_from_2d)
+        to_tensor_2d = self.reshape(to_tensor, self.shape_to_2d)
         query_out = self.query_layer(from_tensor_2d)
         key_out = self.key_layer(to_tensor_2d)
         value_out = self.value_layer(to_tensor_2d)
-        # `value_layer` = [B*T, N*H]
-        # `query_layer` = [B, N, F, H]
-        query_layer = self.transpose_for_scores(query_out, self.batch_size,
-                                                self.num_attention_heads, self.from_seq_length,
-                                                self.size_per_head)
 
-        # `key_layer` = [B, N, T, H]
-        key_layer = self.transpose_for_scores(key_out, self.batch_size, self.num_attention_heads,
-                                              self.to_seq_length, self.size_per_head)
+        query_layer = self.reshape(query_out, self.shape_from)
+        query_layer = self.transpose(query_layer, self.trans_shape)
+        key_layer = self.reshape(key_out, self.shape_to)
+        key_layer = self.transpose(key_layer, self.trans_shape)
+
         attention_scores = self.matmul_trans_b(query_layer, key_layer)
-        attention_scores = self.multiply(attention_scores,
-                                         1.0 / math.sqrt(float(self.size_per_head)))
-        if not attention_mask:
+
+        attention_scores = self.multiply(self.scores_mul, attention_scores)
+
+        if self.has_attention_mask:
             attention_mask = self.expand_dims(attention_mask, 1)
             multiply_out = self.sub(self.cast(F.tuple_to_array((1.0,)), self.get_dtype(attention_scores)),
                                     self.cast(attention_mask, self.get_dtype(attention_scores)))
+
             adder = self.multiply(multiply_out, self.multiply_data)
             attention_scores = self.add(adder, attention_scores)
+
         attention_probs = self.softmax(attention_scores)
         attention_probs = self.dropout(attention_probs)
+
         value_layer = self.reshape(value_out, self.shape_to)
         value_layer = self.transpose(value_layer, self.trans_shape)
         context_layer = self.matmul(attention_probs, value_layer)
@@ -561,9 +466,69 @@ class AttentionLayer(nn.Cell):
         return context_layer
 
 
+class RobertaSelfAttention(nn.Cell):
+    """
+    Apply self-attention.
+
+    Args:
+        seq_length (int): Length of input sequence.
+        hidden_size (int): Size of the roberta encoder layers.
+        num_attention_heads (int): Number of attention heads. Default: 12.
+        attention_probs_dropout_prob (float): The dropout probability for
+                                      RobertaAttention. Default: 0.1.
+        initializer_range (float): Initialization value of TruncatedNormal. Default: 0.02.
+        hidden_dropout_prob (float): The dropout probability for encoderOutput. Default: 0.1.
+        use_relative_positions (bool): Specifies whether to use relative positions. Default: False.
+        compute_type (:class:`mindspore.dtype`): Compute type in RobertaSelfAttention. Default: mstype.float32.
+    """
+    def __init__(self,
+                 seq_length,
+                 hidden_size,
+                 num_attention_heads=12,
+                 attention_probs_dropout_prob=0.1,
+                 initializer_range=0.02,
+                 hidden_dropout_prob=0.1,
+                 use_relative_positions=False,
+                 compute_type=mstype.float32):
+        super(RobertaSelfAttention, self).__init__()
+        if hidden_size % num_attention_heads != 0:
+            raise ValueError("The hidden size (%d) is not a multiple of the number "
+                             "of attention heads (%d)" % (hidden_size, num_attention_heads))
+
+        self.size_per_head = int(hidden_size / num_attention_heads)
+
+        self.attention = RobertaAttention(
+            from_tensor_width=hidden_size,
+            to_tensor_width=hidden_size,
+            from_seq_length=seq_length,
+            to_seq_length=seq_length,
+            num_attention_heads=num_attention_heads,
+            size_per_head=self.size_per_head,
+            attention_probs_dropout_prob=attention_probs_dropout_prob,
+            initializer_range=initializer_range,
+            use_relative_positions=use_relative_positions,
+            has_attention_mask=True,
+            do_return_2d_tensor=True,
+            compute_type=compute_type)
+
+        self.output = EncoderOutput(in_channels=hidden_size,
+                                 out_channels=hidden_size,
+                                 initializer_range=initializer_range,
+                                 dropout_prob=hidden_dropout_prob,
+                                 compute_type=compute_type)
+        self.reshape = P.Reshape()
+        self.shape = (-1, hidden_size)
+
+    def construct(self, input_tensor, attention_mask):
+        input_tensor = self.reshape(input_tensor, self.shape)
+        attention_output = self.attention(input_tensor, input_tensor, attention_mask)
+        output = self.output(attention_output, input_tensor)
+        return output
+
+
 class RobertaEncoderCell(nn.Cell):
     """
-    Encoder cells used in BertTransformer.
+    Encoder cells used in RobertaTransformer.
 
     Args:
         hidden_size (int): Size of the bert encoder layers. Default: 768.
@@ -572,8 +537,6 @@ class RobertaEncoderCell(nn.Cell):
         intermediate_size (int): Size of intermediate layer. Default: 3072.
         attention_probs_dropout_prob (float): The dropout probability for
                                       BertAttention. Default: 0.02.
-        use_one_hot_embeddings (bool): Specifies whether to use one hot encoding form.
-                            Default: False.
         initializer_range (float): Initialization value of TruncatedNormal. Default: 0.02.
         hidden_dropout_prob (float): The dropout probability for BertOutput. Default: 0.1.
         hidden_act (str): Activation function. Default: "gelu".
@@ -581,7 +544,6 @@ class RobertaEncoderCell(nn.Cell):
     """
 
     def __init__(self,
-                 batch_size: int,
                  hidden_size: int = 768,
                  seq_length: int = 512,
                  num_attention_heads: int = 12,
@@ -591,11 +553,10 @@ class RobertaEncoderCell(nn.Cell):
                  hidden_dropout_prob: float = 0.1,
                  hidden_act: str = "gelu",
                  compute_type: mstype = mstype.float32):
-        super(RobertaEncoderCell, self).__init__()
+        super().__init__()
         self.size_per_head = int(hidden_size / num_attention_heads)
 
-        self.attention = AttentionLayer(
-            batch_size=batch_size,
+        self.attention = RobertaAttention(
             from_tensor_width=hidden_size,
             to_tensor_width=hidden_size,
             from_seq_length=seq_length,
@@ -643,7 +604,7 @@ class RobertaEncoderCell(nn.Cell):
         return output
 
 
-class BertTransformer(nn.Cell):
+class RobertaTransformer(nn.Cell):
     """
     Multi-layer bert transformer.
 
@@ -654,19 +615,16 @@ class BertTransformer(nn.Cell):
         num_attention_heads (int): Number of attention heads in encoder cells. Default: 12.
         intermediate_size (int): Size of intermediate layer in encoder cells. Default: 3072.
         attention_probs_dropout_prob (float): The dropout probability for
-                                      BertAttention. Default: 0.1.
-        use_one_hot_embeddings (bool): Specifies whether to use one hot encoding form.
-                             Default: False.
+                                      RobertaAttention. Default: 0.1.
         initializer_range (float): Initialization value of TruncatedNormal. Default: 0.02.
-        hidden_dropout_prob (float): The dropout probability for BertOutput. Default: 0.1.
+        hidden_dropout_prob (float): The dropout probability for RobertaOutput. Default: 0.1.
         hidden_act (str): Activation function used in the encoder cells. Default: "gelu".
-        compute_type (:class:`mindspore.dtype`): Compute type in BertTransformer.
+        compute_type (:class:`mindspore.dtype`): Compute type in RobertaTransformer.
                                         Default: mstype.float32.
         return_all_encoders (bool): Specifies whether to return all encoders. Default: False.
     """
 
     def __init__(self,
-                 batch_size: int,
                  hidden_size: int,
                  seq_length: int,
                  num_hidden_layers: int,
@@ -678,11 +636,11 @@ class BertTransformer(nn.Cell):
                  hidden_act: str = "gelu",
                  compute_type: mstype = mstype.float32,
                  return_all_encoders: bool = False):
-        super(BertTransformer, self).__init__()
+        super().__init__()
         self.return_all_encoders = return_all_encoders
         layers = []
         for _ in range(num_hidden_layers):
-            layer = RobertaEncoderCell(batch_size=batch_size, hidden_size=hidden_size,
+            layer = RobertaEncoderCell(hidden_size=hidden_size,
                                        seq_length=seq_length,
                                        num_attention_heads=num_attention_heads,
                                        intermediate_size=intermediate_size,
@@ -700,7 +658,7 @@ class BertTransformer(nn.Cell):
         self.out_shape = (-1, seq_length, hidden_size)
 
     def construct(self, input_tensor: Tensor, attention_mask: Tensor) -> Tensor:
-        """Multi-layer bert transformer."""
+        """Multi-layer roberta transformer : Bert -> Roberta."""
         prev_output = self.reshape(input_tensor, self.shape)
         all_encoder_layers = ()
         for layer_module in self.layers:
@@ -718,11 +676,12 @@ class BertTransformer(nn.Cell):
 
 
 def numbtpye2mstype(src_type: str) -> mstype:
-    """ Convert String to Mstype.
-        Args:
-            src_type:the String for mstype.
-         Return:
-             desc_type:convert String to Mstype.
+    """
+    Convert String to Mstype.
+    Args:
+        src_type:the String for mstype.
+    Return:
+        desc_type:convert String to Mstype.
 
     """
     desc_type = None
@@ -782,7 +741,7 @@ class CreateAttentionMaskFromInputMask(nn.Cell):
     """
 
     def __init__(self, config: RobertaConfig):
-        super(CreateAttentionMaskFromInputMask, self).__init__()
+        super().__init__()
         self.input_mask = None
 
         self.cast = P.Cast()
@@ -801,7 +760,7 @@ class CreateAttentionMaskFromInputMask(nn.Cell):
 
 class RobertaModel(nn.Cell):
     """
-        Used from mindtext.modules.encoder.bert with Bert->Roberta
+        Used from mindtext.modules.encoder.roberta with Roberta
 
         Args:
         config (Class): Configuration for RobertaModel.
@@ -814,7 +773,7 @@ class RobertaModel(nn.Cell):
                  config: RobertaConfig,
                  is_training: bool,
                  use_one_hot_embeddings: bool = False):
-        super(RobertaModel, self).__init__()
+        super().__init__()
         config = copy.deepcopy(config)
         if not is_training:
             config.hidden_dropout_prob = 0.0
@@ -827,26 +786,23 @@ class RobertaModel(nn.Cell):
         self.token_type_ids = None
         self.compute_type = numbtpye2mstype(config.compute_type)
         self.last_idx = self.num_hidden_layers - 1
-        self.padding_idx = 1
         output_embedding_shape = [-1, self.seq_length, self.embedding_size]
-        self.robert_embedding_lookup = nn.Embedding(
+        self.roberta_embedding_lookup = nn.Embedding(
             vocab_size=config.vocab_size,
             embedding_size=self.embedding_size,
-            padding_idx=self.padding_idx,
             use_one_hot=use_one_hot_embeddings,
             embedding_table=TruncatedNormal(config.initializer_range))
 
-        self.robert_embedding_postprocessor = RobertaEmbedding(
+        self.roberta_embedding_postprocessor = EmbeddingPostprocessor(
             embedding_size=self.embedding_size,
             embedding_shape=output_embedding_shape,
-            use_token_type=True,
+            use_token_type=False,
             token_type_vocab_size=config.type_vocab_size,
             use_one_hot_embeddings=use_one_hot_embeddings,
             max_position_embeddings=config.max_position_embeddings,
             dropout_prob=config.hidden_dropout_prob)
 
-        self.robert_encoder = BertTransformer(
-            batch_size=config.batch_size,
+        self.roberta_encoder = RobertaTransformer(
             hidden_size=self.hidden_size,
             seq_length=self.seq_length,
             num_attention_heads=config.num_attention_heads,
@@ -871,11 +827,10 @@ class RobertaModel(nn.Cell):
                                     .to_float(mstype.float32)
         self._create_attention_mask_from_input_mask = CreateAttentionMaskFromInputMask(config)
 
-    def construct(self, input_ids: Tensor, token_type_ids: Tensor, input_mask: Tensor) -> Tuple[Tensor, Tensor, Tensor]:
+    def construct(self, input_ids: Tensor, input_mask: Tensor) -> Tuple[Tensor, Tensor, Tensor]:
         """Bidirectional Encoder Representations from Transformers.
         Args:
             input_ids:A vector containing the transformation of characters into corresponding ids.
-            token_type_ids:A vector containing segemnt ids.
             input_mask:the mask for input_ids.
 
         Returns:
@@ -885,15 +840,15 @@ class RobertaModel(nn.Cell):
 
         """
         # embedding
-        embedding_tables = self.robert_embedding_lookup.embedding_table
-        word_embeddings = self.robert_embedding_lookup(input_ids)
-        embedding_output = self.robert_embedding_postprocessor(token_type_ids,
-                                                               word_embeddings)
+        embedding_tables = self.roberta_embedding_lookup.embedding_table
+        word_embeddings = self.roberta_embedding_lookup(input_ids)
+        embedding_output = self.roberta_embedding_postprocessor(input_ids,
+                                                                word_embeddings)
         # attention mask [batch_size, seq_length, seq_length]
         attention_mask = self._create_attention_mask_from_input_mask(input_mask)
 
-        # bert encoder
-        encoder_output = self.robert_encoder(self.cast_compute_type(embedding_output),
+        # roberta encoder
+        encoder_output = self.roberta_encoder(self.cast_compute_type(embedding_output),
                                              attention_mask)
 
         sequence_output = self.cast(encoder_output[self.last_idx], self.dtype)
