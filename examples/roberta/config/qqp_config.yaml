@@ -1,0 +1,24 @@
+context:
+    mode: 0 #0--静态图模式; 1--动态图模式
+    device_target: "GPU"
+
+dataset:
+    type: QQPDataset #Dataset类型
+    paths: '' #数据集路径，需要指定
+    batch_size: 64
+    tokenizer: 'roberta-base' #分词器路径
+    max_length: 128
+    stream: True
+    truncation_strategy: True
+    columns_list: ['input_ids', 'attention_mask', 'label']
+    test_columns_list: ['input_ids', 'attention_mask']
+
+model:
+    config_path: './config/model_config.json'
+    ckpt_path: '' #初始化权重路径，需要指定
+    save_path: './ckpt/qqp/ft.ckpt' #模型保存路径
+    result_path: './result/qqp' #评估结果目录
+
+epochs: 3
+
+num_labels: 2 #标签类别数量
