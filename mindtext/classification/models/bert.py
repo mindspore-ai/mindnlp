@@ -16,6 +16,7 @@
 
 import numpy as np
 import mindspore.nn as nn
+import mindspore.ops as ops
 import mindspore.common.dtype as mstype
 from mindspore.common.initializer import TruncatedNormal
 from mindspore.nn.learning_rate_schedule import LearningRateSchedule, PolynomialDecayLR, WarmUpLR
@@ -29,6 +30,7 @@ from mindspore.ops import composite as C
 from mindspore.ops import Squeeze
 from mindspore.communication.management import get_group_size
 from mindspore import context, load_checkpoint, load_param_into_net
+from mindspore.common.seed import _get_graph_seed
 from mindtext.embeddings.bert_embedding import BertEmbedding
 
 
@@ -41,8 +43,9 @@ class BertforSequenceClassification(nn.Cell):
         is_training (bool): True for training mode. False for eval mode.
         num_labels (int): Number of label types.
         dropout_prob (float): The dropout probability for BertforSequenceClassification.
+        multi_sample_dropout (int): Dropout times per step
     """
-    def __init__(self, config, is_training, num_labels=2, dropout_prob=0.0):
+    def __init__(self, config, is_training, num_labels, dropout_prob=0.1, multi_sample_dropout=1):
         super(BertforSequenceClassification, self).__init__()
         if not is_training:
             config.hidden_dropout_prob = 0.0
@@ -55,7 +58,10 @@ class BertforSequenceClassification(nn.Cell):
         self.num_labels = num_labels
         self.dense_1 = nn.Dense(config.hidden_size, self.num_labels, weight_init=self.weight_init,
                                 has_bias=True).to_float(mstype.float32)
-        self.dropout = nn.Dropout(1 - dropout_prob)
+        self.dropout_list = []
+        for _ in range(0, multi_sample_dropout):
+            seed0, seed1 = _get_graph_seed(1, "dropout")
+            self.dropout_list.append(ops.Dropout(1-dropout_prob, seed0, seed1))
         self.loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction="mean")
         self.squeeze = Squeeze(1)
         self.num_labels = num_labels
@@ -77,22 +83,21 @@ class BertforSequenceClassification(nn.Cell):
     def construct(self, input_ids, input_mask, token_type_id, label_ids=0):
         """
         Classification task
-        Args:
-            input_ids:A vector containing the transformation of characters into corresponding ids.
-            token_type_id:A vector containing segment ids.
-            input_mask:the mask for input_ids.
-            label_ids:the label ids
-
-        Returns:
-            loss:return to cross entropy output in training mode or logits in eval mode
         """
         _, pooled_output = self.bert(input_ids, token_type_id, input_mask)
-        cls = self.dropout(pooled_output)
-        logits = self.dense_1(cls)
+        loss = None
         if self.is_training:
-            loss = self.loss(logits, self.squeeze(label_ids))
+            for dropout in self.dropout_list:
+                cls, _ = dropout(pooled_output)
+                logits = self.dense_1(cls)
+                temp_loss = self.loss(logits, self.squeeze(label_ids))
+                if loss is None:
+                    loss = temp_loss
+                else:
+                    loss += temp_loss
+            loss = loss/len(self.dropout_list)
         else:
-            loss = logits
+            loss = self.dense_1(pooled_output)
         return loss
 
 

@@ -1,0 +1,26 @@
+context:
+    mode: 0 #0--静态图模式; 1--动态图模式
+    device_target: "GPU"
+
+dataset:
+    type: AFQMCDataset #Dataset类型
+    paths: './dataset/afqmc' #数据集路径，需要指定
+    batch_size: 64
+    tokenizer: './model/' #分词器路径
+    max_length: 128
+    stream: True
+    truncation_strategy: True
+    columns_list: ['input_ids', 'attention_mask', 'token_type_ids', 'label']
+    test_columns_list: ['input_ids', 'attention_mask', 'token_type_ids']
+
+model:
+    config_path: './model/bert_cn.yaml'
+    ckpt_path: './model/bert_cn.ckpt' #初始化权重路径，需要指定
+    save_path: './result/afqmc/train_afqmc.ckpt' #模型保存路径
+    result_path: './result/afqmc' #评估结果目录
+
+epochs: 4
+
+num_labels: 2 #标签类别数量
+drop_prob: 0.1 #下游任务dropout概率
+num_drop: 5 #多样本dropout数量
