@@ -48,7 +48,9 @@ class DBpediaDataset(CLSBaseDataset):
                  tokenizer: Union[str] = 'spacy', lang: str = 'en', max_size: Optional[int] = None,
                  min_freq: Optional[int] = None,
                  padding: str = '<pad>', unknown: str = '<unk>', **kwargs):
-        super(DBpediaDataset, self).__init__(sep=',', name='dbpedia', **kwargs)
+        super(DBpediaDataset, self).__init__(sep=',', name='dbpedia',
+                                             label_map={14: 13, 13: 12, 12: 11, 11: 10, 10: 9, 9: 8, 8: 7, 7: 6, 6: 5,
+                                                        5: 4, 4: 3, 3: 2, 2: 1, 1: 0}, **kwargs)
         self._paths = paths
         self._tokenize = tokenizer
         self._lang = lang

@@ -15,5 +15,3 @@
 """
 Init models
 """
-from .build_train import build_model, Model
-from .backbones import FastTextInferCell

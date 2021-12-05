@@ -64,7 +64,7 @@ class Model:
             target_sens.append(batch[label_name])
             for i in inputs_name:
                 inputs[i] = Tensor(batch[i], mstype.int32)
-            predicted_idx = self.infer_model(**inputs)
+            predicted_idx = self.infer_model(inputs['input_ids'])
             predictions.append(predicted_idx.asnumpy())
             inputs = {}
         target_sens = np.array(target_sens).flatten()
