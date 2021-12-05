@@ -70,7 +70,7 @@ class StaticEmbedding(TokenEmbedding):
             model_dir_or_name = None
         model_path = None
         if model_dir_or_name:
-            model_path = './en-glove.6B.100d.txt'
+            model_path = './glove.6B.300d.txt'
         if model_path:
             embedding = self._load_with_vocab(model_path, vocab)
         else:

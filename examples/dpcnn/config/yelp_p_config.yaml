@@ -1,0 +1,60 @@
+# Copyright 2021 Huawei Technologies Co., Ltd
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+# ============================================================================
+
+# model architecture
+model_name: "DPCNN"
+
+# global config
+device_target: "GPU"
+dataset_sink_mode: False
+context:
+    mode: 0 #0--Graph Mode; 1--Pynative Mode
+    device_target: "GPU"
+    save_graphs: False
+    device_id: 0
+
+# model settings of every parts
+model:
+    embedding: 'glove.6B.300d'
+    encoder:
+        type: ConvEncoder
+        num_filters: 256
+        kernel_size: 3
+        num_layers: 7
+        embed_dropout: 0.1
+    decoder:
+        type: NormalDecoder
+        num_filters: 256
+        num_classes: 2
+        classes_dropout: 0.1
+
+# dataset config
+dataset:
+    type: 'YelpPolarityDataset'
+    paths: ''   # 需要指定
+    tokenizer: 'spacy'
+    batch_size: 512
+    columns_list: ['input_ids', 'label']
+    test_columns_list: ['input_ids', 'label']
+
+train:
+    save_ckpt_dir: "./ckpt_yelp_p"
+    epochs: 10
+    epoch_count: 1
+    save_checkpoint_epochs: 10
+    save_checkpoint_steps: 1094
+    keep_checkpoint_max: 10
+    run_distribute: False
+    distribute_batch_size_gpu: 64

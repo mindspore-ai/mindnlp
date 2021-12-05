@@ -140,9 +140,8 @@ class DPCNNTrainOneStep(nn.Cell):
         self.hyper_map = C.HyperMap()
         self.cast = P.Cast()
 
-    def construct(self, src_token_text, src_token_length, label_idx_tag):
+    def construct(self, src_token_text, label_idx_tag):
         """Defines the computation performed."""
-        print(src_token_length)
         weights = self.weights
         loss = self.network(src_token_text, label_idx_tag)
         grads = self.grad(self.network, weights)(src_token_text,
