@@ -136,10 +136,12 @@ class LukeModel(nn.Cell):
 
 
 def _compute_extended_attention_mask(word_attention_mask, entity_attention_mask):
+    """_compute_extended_attention_mask"""
     attention_mask = word_attention_mask
-    if entity_attention_mask is not None:
-        op_concat = ops.Concat(1)
-        attention_mask = op_concat((attention_mask, entity_attention_mask))
+
+    op_concat = ops.Concat(1)
+    attention_mask = op_concat((attention_mask, entity_attention_mask))
+
     unsqueezee = ops.ExpandDims()
     extended_attention_mask = unsqueezee(unsqueezee(attention_mask, 1), 2)
     extended_attention_mask = extended_attention_mask.astype(mstype.float32)
@@ -152,7 +154,6 @@ class LukeEntityAwareAttentionModel(nn.Cell):
 
     def __init__(self, config):
         super(LukeEntityAwareAttentionModel, self).__init__()
-        # self.Lukemodel = LukeModel(config)
         self.embeddings = RobertaEmbeddings(config)
         self.entity_embeddings = EntityEmbeddings(config)
         self.encoder = EntityAwareEncoder(config)
@@ -224,9 +225,8 @@ class EntityAwareSelfAttention(nn.Cell):
         entity_attention_scores = self.concat3([e2w_attention_scores, e2e_attention_scores])
         attention_scores = self.concat2([word_attention_scores, entity_attention_scores])
 
-        attention_scores = attention_scores / np.sqrt(self.attention_head_size)
+        attention_scores = attention_scores / np.sqrt(1.0 * self.attention_head_size)
         attention_scores = attention_scores + attention_mask
-
         attention_probs = self.softmax(attention_scores)
         attention_probs = self.dropout(attention_probs)
 
@@ -302,7 +302,6 @@ class EntityAwareEncoder(nn.Cell):
 
     def __init__(self, config):
         super(EntityAwareEncoder, self).__init__()
-        # self.layer = EntityAwareLayer(config)
         self.layer = nn.CellList([EntityAwareLayer(config) for _ in range(config.num_hidden_layers)])
 
     def construct(self, word_hidden_states, entity_hidden_states, attention_mask):

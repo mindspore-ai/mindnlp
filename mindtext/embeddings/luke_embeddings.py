@@ -25,6 +25,7 @@ class EntityEmbeddings(nn.Cell):
 
     def __init__(self, config):
         super(EntityEmbeddings, self).__init__()
+
         self.entity_emb_size = config.entity_emb_size
         self.hidden_size = config.hidden_size
         self.entity_embeddings = nn.Embedding(config.entity_vocab_size, config.entity_emb_size, padding_idx=0)
@@ -36,7 +37,7 @@ class EntityEmbeddings(nn.Cell):
         self.token_type_embeddings = nn.Embedding(config.type_vocab_size, config.hidden_size)
 
         self.layer_norm = nn.LayerNorm([config.hidden_size], epsilon=config.layer_norm_eps)
-        self.dropout = nn.Dropout(config.hidden_dropout_prob)
+        self.dropout = nn.Dropout(1 - config.hidden_dropout_prob)
         self.unsqueezee = ops.ExpandDims()
 
     def construct(self, entity_ids, position_ids, token_type_ids=None):
@@ -44,25 +45,34 @@ class EntityEmbeddings(nn.Cell):
 
         if token_type_ids is None:
             token_type_ids = ops.zeros_like(entity_ids)
-
+        # print("position_ids:", position_ids.shape)
         entity_embeddings = self.entity_embeddings(entity_ids)
         if self.entity_emb_size != self.hidden_size:
             entity_embeddings = self.entity_embedding_dense(entity_embeddings)
         entity_position_ids_int = clamp(position_ids)
 
         position_embeddings = self.position_embeddings(entity_position_ids_int)
+        # print("0.position_embeddings:", position_embeddings.shape)
 
         position_ids = position_ids.astype(mstype.int32)
         position_embedding_mask = 1.0 * self.unsqueezee((position_ids != -1), -1)
+        # print("1.position_embeddings:", position_embeddings.shape)
 
         position_embeddings = position_embeddings * position_embedding_mask
+        # print("2.position_embeddings:", position_embeddings.shape)
 
         position_embeddings = ops.reduce_sum(position_embeddings, -2)
+        # print("3.position_embeddings:", position_embeddings.shape)
+
         position_embeddings = position_embeddings / clamp(ops.reduce_sum(position_embedding_mask, -2), minimum=1e-7)
 
         token_type_embeddings = self.token_type_embeddings(token_type_ids)
+        # print("entity_embeddings:", entity_embeddings.shape)
+        # print("4.position_embeddings:", position_embeddings.shape)
+        # print("token_type_embeddings:", token_type_embeddings.shape)
 
-        embeddings = entity_embeddings + position_embeddings + token_type_embeddings
+        embeddings = entity_embeddings + position_embeddings
+        embeddings += token_type_embeddings
 
         embeddings = self.layer_norm(embeddings)
         embeddings = self.dropout(embeddings)
@@ -90,12 +100,12 @@ class RobertaEmbeddings(nn.Cell):
                                                 config.hidden_size)
         self.token_type_embeddings = nn.Embedding(config.type_vocab_size,
                                                   config.hidden_size)
-
+        self.add = ops.Add()
         # self.LayerNorm is not snake-cased to stick with TensorFlow model variable name and be able to load
         # any TensorFlow checkpoint file
         self.layer_norm = nn.LayerNorm([config.hidden_size],
                                        epsilon=config.layer_norm_eps)
-        self.dropout = nn.Dropout(config.hidden_dropout_prob)
+        self.dropout = nn.Dropout(1 - config.hidden_dropout_prob)
         self.position_embedding_type = getattr(config, "position_embedding_type", "absolute")
 
         # End copy
@@ -130,16 +140,17 @@ class RobertaEmbeddings(nn.Cell):
                 position_ids = create_position_ids_from_input_ids(inputs_embeds)
 
         input_shape = input_ids.shape
+        # seq_length = input_shape[1]
         if token_type_ids is None:
             token_type_ids = ops.Zeros(input_shape, dtype=mstype.int64)
         if inputs_embeds is None:
             inputs_embeds = self.word_embeddings(input_ids)
         token_type_embeddings = self.token_type_embeddings(token_type_ids)
 
-        embeddings = inputs_embeds + token_type_embeddings
+        embeddings = self.add(inputs_embeds, token_type_embeddings)
         position_ids = position_ids.astype(mstype.int32)
         position_embeddings = self.position_embeddings(position_ids)
-        embeddings += position_embeddings
+        embeddings = self.add(embeddings, position_embeddings)
         embeddings = self.layer_norm(embeddings)
         embeddings = self.dropout(embeddings)
         return embeddings
