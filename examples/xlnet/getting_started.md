@@ -22,6 +22,14 @@ SST2:https://dl.fbaipublicfiles.com/glue/data/SST-2.zip
 
 下载并解压数据集
 
+## 初始化权重
+
+XLNet mindspore初始化权重由pytorch初始化权重转换而来
+
+### mindspore初始化权重
+
+https://pan.baidu.com/s/1S1sgwxmOewuza62kJI7hdw  提取码: 87m2
+
 ## 配置文件
 
 上述四个数据集对应四个配置文件，每个配置文件都需要指定
