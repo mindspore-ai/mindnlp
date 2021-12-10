@@ -10,9 +10,17 @@ QQP(Quora Question Pairs)
 
 SST2(The Stanford Sentiment Treebank)
 
-下载地址：https://gluebenchmark.com/tasks
+## 下载地址
 
-下载并解压
+CoLA:https://dl.fbaipublicfiles.com/glue/data/CoLA.zip
+
+QNLI:https://dl.fbaipublicfiles.com/glue/data/QNLIv2.zip
+
+QQP:https://dl.fbaipublicfiles.com/glue/data/QQP-clean.zip
+
+SST2:https://dl.fbaipublicfiles.com/glue/data/SST-2.zip
+
+下载并解压数据集
 
 ## 配置文件
 
@@ -24,7 +32,7 @@ SST2(The Stanford Sentiment Treebank)
 
 其他参数默认
 
-## 开始训练与评估
+## 开始微调与评估
 
 ```bash run.sh```
 
