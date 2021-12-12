@@ -103,6 +103,8 @@ class MRPCDataset(PairCLSBaseDataset):
         files = {'train': "msr_paraphrase_train.txt",
                  "test": "msr_paraphrase_test.txt"}
 
+        dev_ids_file = "mrpc_dev_ids.tsv"
+
         self._datasets = {}
         for name, filename in files.items():
             filepath = os.path.join(paths, filename)
@@ -111,9 +113,26 @@ class MRPCDataset(PairCLSBaseDataset):
                     raise FileNotFoundError(f"{name} not found in directory {filepath}.")
             dataset = self._load(filepath)
             if 'train' in name:
-                train_dataset = dataset.sample(frac=self._train_ratio, random_state=0, axis=0)
-                self._datasets['train'] = train_dataset.reset_index(drop=True)
-                self._datasets['dev'] = dataset[~dataset.index.isin(train_dataset.index)].reset_index(drop=True)
+                dev_ids_file_path = os.path.join(paths, dev_ids_file)
+                dev_ids = pd.read_csv(dev_ids_file_path, sep='\n')
+                dev_ids = dev_ids.values.tolist()
+                dev_dataset = pd.DataFrame(columns=['label', 'sentence1', 'sentence2'])
+                train_dataset = pd.DataFrame(columns=['label', 'sentence1', 'sentence2'])
+                for row in dataset.itertuples():
+                    ids = [row.ID1 + '\t' + row.ID2]
+                    if ids in dev_ids:
+                        dev_dataset = dev_dataset.append(pd.DataFrame(
+                            {'label': [row.label],
+                             'sentence1': [row.sentence1],
+                             'sentence2': [row.sentence2]}))
+                    else:
+                        train_dataset = train_dataset.append(pd.DataFrame(
+                            {'label': [row.label],
+                             'sentence1': [row.sentence1],
+                             'sentence2': [row.sentence2]}))
+
+                self._datasets['train'] = train_dataset
+                self._datasets['dev'] = dev_dataset
             else:
                 self._datasets[name] = dataset.reset_index(drop=True)
         return self._datasets
