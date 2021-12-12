@@ -40,7 +40,8 @@ def eval_main(pargs):
     dataset = build_dataset(config.dataset)
     dataloader = dataset()
     test_dataloader = dataloader['test']
-    embedding = StaticEmbedding(dataset.vocab, model_dir_or_name=config.model.embedding)
+    embedding = StaticEmbedding(dataset.vocab, model_dir_or_name=config.model.embedding,
+                                embedding_path=config.model.embedding_path)
 
     # set network, loss, optimizer
     network = DPCNN(embedding, config)

@@ -9,11 +9,11 @@
 
 ## Glove词向量权重
 
-下载`glove.6B.300d.txt`到`mindtext/embeddings/`，下载地址(https://www.kaggle.com/anindya2906/glove6b/version/1)
+下载`glove.6B.300d.txt`，下载地址(https://www.kaggle.com/anindya2906/glove6b/version/1)
 
 ## 配置文件
 
-上述三个数据集对应三个配置文件`config/`，每个配置文件都需要指定`dataset.paths #数据集文件夹路径`，其他参数默认
+上述三个数据集对应三个配置文件`config/`，每个配置文件都需要指定`dataset.paths` 和 `embedding.path`，其他参数默认
 
 ## 开始训练与评估
 

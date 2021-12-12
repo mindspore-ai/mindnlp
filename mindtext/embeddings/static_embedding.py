@@ -39,6 +39,7 @@ class StaticEmbedding(TokenEmbedding):
         whether the model exists in the cache. If not, the embedding will be automatically downloaded (after
         huawei cloud implementation). If the input is None, an embedding is randomly initialized using the dimension
         embedding_dim.
+        embedding_path(Union[str, None]): The path of embedding file.
         embedding_dim(int): The dimension of randomly initialized embedding. model_dir_or_name will be ignored if the
         value is greater than 0.
         requires_grad(bool, Optional): Default：True.
@@ -59,8 +60,8 @@ class StaticEmbedding(TokenEmbedding):
             [-2.35586300e-001, 4.89649743e-001, -2.10691467e-001, -1.81295246e-001, -6.90823942e-002]]]).
     """
 
-    def __init__(self, vocab: Vocabulary, model_dir_or_name: Union[str, None] = None, embedding_dim=-1,
-                 requires_grad: bool = True, dropout=0.1):
+    def __init__(self, vocab: Vocabulary, model_dir_or_name: Union[str, None] = None,
+                 embedding_path: Union[str, None] = None, embedding_dim=-1, requires_grad: bool = True, dropout=0.1):
         super(StaticEmbedding, self).__init__(vocab, dropout=dropout)
         if embedding_dim > 0 and model_dir_or_name:
             warnings.warn(f"StaticEmbedding will ignore {model_dir_or_name}, and randomly initialize embedding with"
@@ -70,7 +71,7 @@ class StaticEmbedding(TokenEmbedding):
             model_dir_or_name = None
         model_path = None
         if model_dir_or_name:
-            model_path = './glove.6B.300d.txt'
+            model_path = embedding_path
         if model_path:
             embedding = self._load_with_vocab(model_path, vocab)
         else:
