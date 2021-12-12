@@ -46,7 +46,8 @@ def train_main(pargs):
     train_dataloader = dataloader['train']
 
     # initialize embedding
-    embedding = StaticEmbedding(dataset.vocab, model_dir_or_name=config.model.embedding)
+    embedding = StaticEmbedding(dataset.vocab, model_dir_or_name=config.model.embedding,
+                                embedding_path=config.model.embedding_path)
 
     # set network, loss, and optimizer
     network = DPCNN(embedding, config)

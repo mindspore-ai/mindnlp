@@ -28,6 +28,7 @@ context:
 # model settings of every parts
 model:
     embedding: 'glove.6B.300d'
+    embedding_path: ''  # 需要指定
     encoder:
         type: ConvEncoder
         num_filters: 256
