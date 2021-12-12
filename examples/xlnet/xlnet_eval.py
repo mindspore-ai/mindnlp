@@ -42,9 +42,7 @@ def eval_main(config):
 
     # 初始化数据集
     dataset = build_dataset(config.dataset)
-    dataloader = dataset.from_cache(columns_list=config.dataset.columns_list,
-                                    test_columns_list=config.dataset.test_columns_list,
-                                    batch_size=config.dataset.batch_size)
+    dataloader = dataset()
     dev_dataloader = dataloader['dev']
 
     # 开始评估
