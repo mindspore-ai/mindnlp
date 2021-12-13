@@ -66,10 +66,9 @@ def _construct_char_vocab_from_vocab(vocab: Vocabulary, min_freq: int = 1, inclu
     :return:
     """
     char_vocab = Vocabulary(min_freq=min_freq)
-    char_vocab.build_vocab()
     for word in vocab.word_count.keys():
-        # if not vocab._is_word_no_create_entry(word):
         char_vocab.update(list(word))
     if include_word_start_end:
         char_vocab.update(['<bow>', '<eow>'])
+    char_vocab.build_vocab()
     return char_vocab

@@ -16,7 +16,7 @@
     conll2003 dataset
 """
 import os
-from typing import Union, Dict, List, Optional
+from typing import Union, Dict, List, Optional, Tuple
 
 from tqdm import tqdm
 import numpy as np
@@ -111,7 +111,11 @@ class CONLLDataset(Dataset):
             # $%$ is separator
             return [int(i) for i in x.split("$%$")]
 
+        def convert_to_lower(x):
+            return [i.lower() for i in x]
+
         dataset['tokens'] = dataset['tokens'].map(split_str2liststr)
+        dataset['tokens'] = dataset['tokens'].map(convert_to_lower)
         dataset['pos_tags'] = dataset['pos_tags'].map(split_str2listint)
         dataset['chunk_tags'] = dataset['chunk_tags'].map(split_str2listint)
         dataset['ner_tags'] = dataset['ner_tags'].map(split_str2listint)
@@ -179,6 +183,7 @@ class CONLLDataset(Dataset):
         data_schema = {
             "input_ids": {"type": "int32", "shape": [-1]},
             "input_length": {"type": "int32", "shape": [-1]},
+            "input_mask": {"type": "int32", "shape": [-1]},
             "ner_tags": {"type": "int32", "shape": [-1]},
             "chunk_tags": {"type": "int32", "shape": [-1]},
             "pos_tags": {"type": "int32", "shape": [-1]},
@@ -198,8 +203,10 @@ class CONLLDataset(Dataset):
             # Whether using a pretrained model tokenizer.
             if callable(process_function):
                 row = process_function(row)
-            sample = {"input_ids": np.array(row["input_ids"], dtype=np.int32),
+            input_ids = np.array(row["input_ids"], dtype=np.int32)
+            sample = {"input_ids": input_ids,
                       "input_length": np.array(row["input_length"], dtype=np.int32),
+                      "input_mask": to_mask(np.array(row["input_length"], dtype=np.int32), input_ids.shape),
                       "ner_tags": np.array(row["ner_tags"], dtype=np.int32),
                       "chunk_tags": np.array(row["chunk_tags"], dtype=np.int32),
                       "pos_tags": np.array(row["pos_tags"], dtype=np.int32)}
@@ -225,3 +232,9 @@ class CONLLDataset(Dataset):
             for v in writer.values():
                 v.commit()
         return list(data_schema.keys())
+
+
+def to_mask(input_length: np.ndarray, shape: Tuple[int, int]) -> np.ndarray:
+    input_mask = np.zeros(shape)
+    input_mask[:input_length] = 1
+    return input_mask
