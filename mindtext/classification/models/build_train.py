@@ -23,7 +23,7 @@ from mindspore import dtype as mstype
 from sklearn.metrics import accuracy_score
 import numpy as np
 
-from .backbones.fasttext import FastText, FastTextTrainOneStep, FastTextInferCell
+from .fasttext import FastText, FastTextTrainOneStep, FastTextInferCell
 from .dpcnn import DPCNNTrainOneStep, DPCNNInferCell
 from .classifiers import BaseClassifier
 
