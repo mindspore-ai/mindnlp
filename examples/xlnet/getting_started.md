@@ -46,7 +46,8 @@ https://pan.baidu.com/s/1S1sgwxmOewuza62kJI7hdw  提取码: 87m2
 context：mindspore context相关参数
     mode：设置静态图或者动态图模式，0为静态图，1为动态图。
     device_target：设置目标设备，可选择CPU或者GPU。
-    dataset：数据集相关参数。
+
+dataset：数据集相关参数。
     type：数据集类型。
     paths：数据集文件夹路径。
     batch_size：mini-batch大小。
