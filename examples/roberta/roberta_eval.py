@@ -20,8 +20,8 @@ from tqdm import tqdm
 import mindspore
 from mindspore.nn import Accuracy
 from mindspore import load_checkpoint, load_param_into_net
-from mindtext.modules.encoder.roberta import RobertaConfig
-from mindtext.classification.models.roberta import RobertaForClassification
+from mindtext.modules.encoder.roberta import RobertaConfig, RobertaModel
+from mindtext.classification.models.roberta import RobertaforSequenceClassification
 from mindtext.common.utils.config import Config, parse_args
 from mindtext.dataset.builder import build_dataset
 
@@ -33,19 +33,16 @@ def eval_main(config):
     Args:
         config: Yaml config
     """
-    # 设置图模式（默认为静态图）
-    context.set_context(**config.context)
+
     # 初始化模型、加载权重
-    roberta_config = RobertaConfig.from_json_file(config.model.config_path)
+    roberta_config = RobertaConfig.from_yaml_file(config.model.config_path)
     model = RobertaforSequenceClassification(roberta_config, False, num_labels=config.num_labels,
-                                          dropout_prob=0)
+                                          dropout_prob=0.0)
     model.from_pretrain(config.model.save_path)
 
     # 初始化数据集
     dataset = build_dataset(config.dataset)
-    dataloader = dataset.from_cache(columns_list=config.dataset.columns_list,
-                                    test_columns_list=config.dataset.test_columns_list,
-                                    batch_size=config.dataset.batch_size)
+    dataloader = dataset()
     dev_dataloader = dataloader['dev']
 
     # 开始评估
@@ -53,7 +50,7 @@ def eval_main(config):
         os.makedirs(config.model.result_path)
     metirc = Accuracy('classification')
     metirc.clear()
-    squeeze = Squeeze(1)
+    squeeze = mindspore.ops.Squeeze(1)
     for batch in tqdm(dev_dataloader.create_dict_iterator(num_epochs=1), total=dev_dataloader.get_dataset_size()):
         input_ids = batch['input_ids']
         input_mask = batch['attention_mask']
@@ -62,7 +59,7 @@ def eval_main(config):
                   "input_mask": input_mask
                   }
         output = model(**inputs)
-        sm = Softmax(axis=-1)
+        sm = mindspore.nn.Softmax(axis=-1)
         output = sm(output)
         metirc.update(output, squeeze(label_ids))
 

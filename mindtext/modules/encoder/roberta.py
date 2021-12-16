@@ -11,7 +11,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-""" Encoder classes for RoBERTa. """
+""" Encoder classes for Roberta. """
 import copy
 import math
 from typing import Tuple

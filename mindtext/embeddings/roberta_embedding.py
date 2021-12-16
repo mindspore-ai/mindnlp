@@ -32,9 +32,9 @@ class RobertaEmbedding(nn.Cell):
         super(RobertaEmbedding, self).__init__()
         self.roberta = RobertaModel(roberta_config, is_training)
 
-    def init_robertamodel(self,roberta):
+    def initRobertaModel(self,roberta):
         """
-        Manual initialization BertModel
+        Manual initialization RobertaModel
         """
         self.roberta=roberta
 
