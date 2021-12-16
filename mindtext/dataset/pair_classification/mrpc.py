@@ -80,7 +80,6 @@ class MRPCDataset(PairCLSBaseDataset):
             split_row = get_split_func(dataset, '\t')
             dataset = dataset.progress_apply(split_row, axis=1, result_type="expand")
             dataset.columns = columns
-            dataset = dataset[['label', 'sentence1', 'sentence2']]
             dataset.fillna('')
             dataset.dropna(inplace=True)
         return dataset
