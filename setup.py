@@ -136,7 +136,7 @@ setup(
         'datasets >= 1.12.0',
         'tqdm >= 4.62.2',
         'requests >= 2.25.1',
-        'numpy >= 1.21.2',
+        'numpy == 1.21.2',
         'mindspore_gpu >= 1.3.0',
     ],
     classifiers=[
