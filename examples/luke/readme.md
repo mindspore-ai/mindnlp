@@ -1,8 +1,21 @@
 # LUKE样例
 
-## 数据集
+## 论文地址
 
-SQuAD1.1
+EMNLP: https://www.aclweb.org/anthology/2020.emnlp-main.523.pdf
+
+arxiv: https://arxiv.org/pdf/2010.01057.pdf
+
+## 数据集SQuAD1.1
+
+数据集官网： https://rajpurkar.github.io/SQuAD-explorer/
+
+可以通过wget方式从官网下载SQuAD1.1
+
+'''
+wget https://rajpurkar.github.io/SQuAD-explorer/dataset/train-v1.1.json
+wget https://rajpurkar.github.io/SQuAD-explorer/dataset/dev-v1.1.json
+'''
 
 ## 需要准备的文件
 
@@ -18,7 +31,17 @@ https://drive.google.com/file/d/129tDJ3ev6IdbJiKOmO6GTgNANunhO_vt/view?usp=shari
 
 ## 开始训练与评估
 
+方法1：通过脚本来一键训练预测评估
+'''
 bash run_luke.sh
+'''
+方法2：指定yaml文件来训练以及预测评估
+
+'''
+python train.py -c config/luke_squad.yaml
+
+python eval.py -c config/luke_squad.yaml
+'''
 
 ## 评估结果
 
