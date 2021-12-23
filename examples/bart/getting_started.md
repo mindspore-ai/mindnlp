@@ -2,9 +2,10 @@
 
 ## 数据集
 
-XSUM()
+XSUM(Extreme Summarization)
 
-下载地址：
+下载地址：http://bollin.inf.ed.ac.uk/public/direct/XSUM-EMNLP18-Summary-Data-Original.tar.gz
+分割器：https://raw.githubusercontent.com/EdinburghNLP/XSum/master/XSum-Dataset/XSum-TRAINING-DEV-TEST-SPLIT-90-5-5.json
 
 下载并解压
 
@@ -24,6 +25,6 @@ XSUM()
 
 权重文件在`./ckpt`目录下
 
-评估指标在`./result/${dataset}/result.txt`文件中
+评估文件在`./result/${dataset}`中
 
 性能指标在`./result/${dataset}/train_one_step_time.txt`文件中

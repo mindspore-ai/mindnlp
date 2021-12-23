@@ -17,12 +17,12 @@
 """
 import os
 from tqdm import tqdm
-from rouge import Rouge
 from mindspore import load_checkpoint, load_param_into_net
 from mindtext.modules.encoder.bart import BartConfig, BartModel, BartForConditionalGeneration
 from mindtext.common.utils.config import Config, parse_args
 from mindtext.dataset.builder import build_dataset
 from transformers import BartTokenizer
+import files2rouge
 
 
 def eval_main(config):
@@ -50,36 +50,41 @@ def eval_main(config):
     # 开始评估
     if not os.path.exists(config.model.result_path):
         os.makedirs(config.model.result_path)
-    rouge_eval_str = []
-    rouge = Rouge()
 
-    for batch in tqdm(dev_dataloader):
-        input_ids = batch['input_ids']
-        attention_mask = batch['attention_mask']
-        labels = batch['label']
-        depict_output = model.generation(input_ids=input_ids,
-                                         attention_mask=attention_mask,
-                                         sequence_len=config.dataset.max_length)[:, 1:].asnumpy().tolist()
-        labels = labels.asnumpy().tolist()
-        tokenizer = BartTokenizer.from_pretrained(config.tokenizer)
-        for seq, label in zip(depict_output, labels):
-            if 2 in seq:
-                seq_len = seq.index(2) + 1
-            else:
-                seq_len = len(seq)
-            label_len = label.index(2) + 1
-            single_tokens = tokenizer.convert_ids_to_tokens(seq[:seq_len])
-            single_string = tokenizer.convert_tokens_to_string(single_tokens)
-            single_label_tokens = tokenizer.convert_ids_to_tokens(label[:label_len])
-            single_label_string = tokenizer.convert_tokens_to_string(single_label_tokens)
-            rouge_eval_str.append([single_string, single_label_string])
+    tokenizer = BartTokenizer.from_pretrained(config.tokenizer)
+    beam_search = model.create_beam_search_modules(batch_size=config.dataset.test_batch_size,
+                                                   sequence_length=config.dataset.max_length,
+                                                   beam_width=config.model.beam_width)
 
-    hyps, refs = map(list, zip(*rouge_eval_str))
-    scores = rouge.get_scores(hyps, refs, avg=True)
+    hyps_path = os.path.join(config.result_path, 'hyps.txt')
+    refs_path = os.path.join(config.result_path, 'refs.txt')
+    with open(hyps_path, "w") as hyps, open(refs_path, "w") as refs:
+        for batch in tqdm(dev_dataloader):
+            input_ids = batch['input_ids']
+            attention_mask = batch['attention_mask']
+            labels = batch['label']
+            depict_output = model.beam_search(input_ids=input_ids,
+                                              attention_mask=attention_mask,
+                                              beam_width=config.model.beam_width,
+                                              beam_search_module=beam_search).asnumpy().tolist()
+            labels = labels.asnumpy().tolist()
+            for seq, label in zip(depict_output, labels):
+                if 2 in seq:
+                    seq_len = seq.index(2) + 1
+                elif 1 in seq:
+                    seq_len = seq.index(1)
+                else:
+                    seq_len = len(seq)
+                label_len = label.index(2) + 1
+                single_tokens = tokenizer.convert_ids_to_tokens(seq[1:seq_len])
+                single_string = tokenizer.convert_tokens_to_string(single_tokens)
+                single_label_tokens = tokenizer.convert_ids_to_tokens(label[1:label_len])
+                single_label_string = tokenizer.convert_tokens_to_string(single_label_tokens)
 
-    with open(os.path.join(config.model.result_path, 'result.txt'), "w") as f:
-        f.write(scores)
-    print('result:', scores)
+                hyps.write(single_string + '\n')
+                refs.write(single_label_string + '\n')
+
+    files2rouge.run(hyps_path, refs_path)
 
 
 if __name__ == "__main__":
