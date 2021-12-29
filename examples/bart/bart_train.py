@@ -26,10 +26,9 @@ from mindspore import save_checkpoint, load_checkpoint, load_param_into_net
 from mindspore.train import Model
 from mindspore.train.callback import Callback
 from mindspore.nn.learning_rate_schedule import LearningRateSchedule, PolynomialDecayLR, WarmUpLR
-from mindspore.nn.wrap.loss_scale import DynamicLossScaleUpdateCell
 from mindtext.dataset.generation.xsum import XSUMDataset
 from mindtext.modules.encoder.bart import BartConfig, BartModel, BartForConditionalGeneration, \
-    BartForConditionalGenerationOneStep
+    BartForConditionalGenerationFineTuneCell
 from mindtext.common.utils.config import Config, parse_args
 
 
@@ -104,7 +103,7 @@ class LossCallBack(Callback):
                 time_stamp_current - self.time_stamp_first,
                 cb_params.cur_epoch_num,
                 cb_params.cur_step_num,
-                str(cb_params.net_outputs[0].asnumpy())))
+                str(cb_params.net_outputs.asnumpy())))
             f.write('\n')
 
 
@@ -136,17 +135,16 @@ def train_main(config):
 
     # 初始化epochs、learning_rate
     epochs = config.epochs
-    lr_schedule = BartLearningRate(learning_rate=5e-5,
+    lr_schedule = BartLearningRate(learning_rate=3e-5,
                                    end_learning_rate=5e-5 * 0,
                                    warmup_steps=int(train_dataloader.get_dataset_size() * epochs * 0.1),
                                    decay_steps=train_dataloader.get_dataset_size() * epochs,
                                    power=1.0)
-    update_cell = DynamicLossScaleUpdateCell(loss_scale_value=2 ** 32, scale_factor=2, scale_window=1000)
 
     # 初始化优化器
     params = model.trainable_params()
     optimizer = mindspore.nn.Adam(params, learning_rate=lr_schedule, eps=1e-8)
-    netwithgrads = BartForConditionalGenerationOneStep(model, optimizer=optimizer, scale_update_cell=update_cell)
+    netwithgrads = BartForConditionalGenerationFineTuneCell(model, optimizer=optimizer)
     train_model = Model(netwithgrads)
 
     # 定义回调函数
@@ -154,7 +152,7 @@ def train_main(config):
 
     # 开始训练
     start_time = time.time()
-    train_model.train(epochs, train_dataloader, callbacks=[loss_monitor], dataset_sink_mode=False)
+    train_model.train(epochs, train_dataloader, callbacks=loss_monitor, dataset_sink_mode=False)
     end_time = time.time()
 
     # 保存权重

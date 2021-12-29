@@ -5,10 +5,11 @@ context:
 dataset:
     type: XSUMDataset #Dataset类型
     paths: '' #数据集路径，需要指定
-    batch_size: 64
-    test_batch_sizer: 3
-    tokenizer: 'bart-large' #分词器路径
-    max_length: 64
+    batch_size: 11
+    test_batch_sizer: 30
+    tokenizer: 'bart-large-xsum' #分词器路径
+    max_length: 768
+    max_pair_length: 60
     stream: True
     truncation_strategy: True
     columns_list: ["input_ids", "attention_mask", "labels"]
@@ -19,6 +20,7 @@ model:
     ckpt_path: '' #初始化权重路径，需要指定
     save_path: './ckpt/xsum/ft.ckpt' #模型保存路径
     result_path: './result/xsum' #评估结果目录
+    beam_width: 2
 
 epochs: 4
 
