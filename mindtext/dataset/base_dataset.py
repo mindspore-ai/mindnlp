@@ -1429,7 +1429,7 @@ class GenerateBaseDataset(Dataset):
                     dataset_group = DataFrame(
                         self.padding_progress(DataFrame({"input_ids": dataset_group['labels']}), dataset_type,
                                               pad_function=self._tokenizer.pad))
-                    dataset_group.columns = self._pretrained_model_inputs
+                    dataset_group.columns = self._pretrained_model_inputs_summary
                     dataset['labels'][dataset_group.index] = dataset_group['input_ids']
                 dataset["padding_length"] = self.get_length_progress(dataset, dataset_type, "input_ids")
             self._pretrained_model_inputs = self._pretrained_model_inputs_document
