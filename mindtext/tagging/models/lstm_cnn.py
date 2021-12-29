@@ -19,11 +19,6 @@ import mindspore
 from mindspore import nn
 from mindspore import ops as P
 from mindspore.common import dtype as mstype
-from mindtext.common.data import Vocabulary
-from mindtext.embeddings.static_embedding import StaticEmbedding
-from mindtext.embeddings.char_embedding import CNNCharEmbedding
-from mindtext.modules.decoder.norm_decoder import NormalDecoder
-
 from mindspore import ParameterTuple
 from mindspore import context
 from mindspore.context import ParallelMode
@@ -33,6 +28,11 @@ from mindspore.ops import composite as C
 from mindspore.ops import GradOperation
 from mindspore.communication import get_group_size
 from mindspore.nn.wrap.grad_reducer import DistributedGradReducer
+from mindtext.common.data import Vocabulary
+from mindtext.embeddings.static_embedding import StaticEmbedding
+from mindtext.embeddings.char_embedding import CNNCharEmbedding
+from mindtext.modules.decoder.norm_decoder import NormalDecoder
+
 
 GRADIENT_CLIP_TYPE = 1
 GRADIENT_CLIP_VALUE = 1.0
@@ -80,14 +80,14 @@ class LstmCnnConfig(nn.Cell):
                  model_dir_or_name: Union[str, None] = None,
                  word_embed_size: int = 100,
                  char_embed_size: int = 30,
-                 embed_dropout: float = 0.68,
+                 embed_dropout: float = 0.69,
                  filter_nums: List[int] = (30,),
                  conv_kernel_sizes: List[int] = (3,),
                  pool_method: str = 'avg',
                  conv_char_embed_activation: str = 'relu',
                  min_char_freq: int = 1,
                  num_layers: int = 2,
-                 hidden_size: int = 200,
+                 hidden_size: int = 250,
                  output_size: int = 100,
                  num_classes: int = 9,
                  hidden_activation: str = 'relu',
@@ -177,13 +177,14 @@ class LstmCnn(nn.Cell):
         batch_size = words.shape[0]
         word_emb = self.word_embedding(words)
         char_emb = self.cnn_char_embedding(words)
-        char_emb = self.dropout(char_emb)
+        char_emb = self.dropout_emb(char_emb)
         word_char_emb = self.concat((word_emb, char_emb))
         word_char_emb = self.dropout_emb(word_char_emb)
 
         h0 = self.zeros((2 * self.num_layers, batch_size, self.hidden_size), mstype.float32)
         c0 = self.zeros((2 * self.num_layers, batch_size, self.hidden_size), mstype.float32)
         output, _ = self.bi_lstm(word_char_emb, (h0, c0))
+        output = self.dropout(output)
         output = self.tanh(output)
         output = self.liner_decoder(output)
 
@@ -205,9 +206,19 @@ class LstmCnnWithLoss(nn.Cell):
         self.loss_func = loss
         self.squeeze = P.Squeeze(axis=1)
         self.argmax = P.ArgMaxWithValue(axis=-1)
-        self.print = P.Print()
 
     def construct(self, src_tokens, src_mask, label_idx):
+        """
+        Apply LSTM-CNNs model.
+
+        Args:
+            src_tokens (Tensor): Tokens of sentences
+            src_mask (Tensor): Masks of sentences
+            label_idx: Labels of sentences, such as NER labels
+
+        Returns:
+            loss : The shape is (batch_size, max_len, output_size). The output of LSTM-CNNs model.
+        """
         predict_score = self.lstmcnn(src_tokens)
         if self.training:
             loss = self.loss_func(predict_score.reshape(-1, predict_score.shape[-1]), label_idx.reshape(-1))
@@ -259,9 +270,5 @@ class LstmCnnTrainOneStep(nn.Cell):
         grads = self.grad(self.network, weights)(src_token_text,
                                                  src_mask,
                                                  label_idx_tag)
-        # grads = self.hyper_map(F.partial(clip_grad, GRADIENT_CLIP_TYPE, GRADIENT_CLIP_VALUE), grads)
-        # if self.reducer_flag:
-        #     # apply grad reducer on grads
-        #     grads = self.grad_reducer(grads)
         succ = self.optimizer(grads)
         return F.depend(loss, succ)
