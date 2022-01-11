@@ -6,7 +6,7 @@ dataset:
     type: XSUMDataset #Dataset类型
     paths: '' #数据集路径，需要指定
     batch_size: 11
-    test_batch_sizer: 30
+    test_batch_size: 30
     tokenizer: 'bart-large-xsum' #分词器路径
     max_length: 768
     max_pair_length: 60
@@ -23,5 +23,3 @@ model:
     beam_width: 2
 
 epochs: 4
-
-num_labels: 2 #标签类别数量

@@ -53,7 +53,7 @@ def eval_main(config):
 
     tokenizer = BartTokenizer.from_pretrained(config.tokenizer)
     beam_search = model.create_beam_search_modules(batch_size=config.dataset.test_batch_size,
-                                                   sequence_length=config.dataset.max_length,
+                                                   sequence_length=config.dataset.max_pair_length,
                                                    beam_width=config.model.beam_width)
 
     hyps_path = os.path.join(config.result_path, 'hyps.txt')
@@ -80,10 +80,8 @@ def eval_main(config):
                 single_string = tokenizer.convert_tokens_to_string(single_tokens)
                 single_label_tokens = tokenizer.convert_ids_to_tokens(label[1:label_len])
                 single_label_string = tokenizer.convert_tokens_to_string(single_label_tokens)
-
                 hyps.write(single_string + '\n')
                 refs.write(single_label_string + '\n')
-
     files2rouge.run(hyps_path, refs_path)
 
 
