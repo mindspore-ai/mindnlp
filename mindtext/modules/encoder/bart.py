@@ -35,58 +35,52 @@ clip_grad = ops.composite.MultitypeFuncGraph("clip_grad")
 
 
 class BartConfig:
-    r"""
-    This is the configuration class to store the configuration of a :class:`~transformers.BartModel`. It is used to
-    instantiate a BART model according to the specified arguments, defining the model architecture. Instantiating a
-    configuration with the defaults will yield a similar configuration to that of the BART `facebook/bart-large
-    <https://huggingface.co/facebook/bart-large>`__ architecture.
-
-    Configuration objects inherit from :class:`~transformers.PretrainedConfig` and can be used to control the model
-    outputs. Read the documentation from :class:`~transformers.PretrainedConfig` for more information.
-
-
+    """
     Args:
-        vocab_size (:obj:`int`, `optional`, defaults to 50265):
+        vocab_size (int):
             Vocabulary size of the BART model. Defines the number of different tokens that can be represented by the
-            :obj:`inputs_ids` passed when calling :class:`~transformers.BartModel` or
-            :class:`~transformers.TFBartModel`.
-        d_model (:obj:`int`, `optional`, defaults to 1024):
-            Dimensionality of the layers and the pooler layer.
-        encoder_layers (:obj:`int`, `optional`, defaults to 12):
-            Number of encoder layers.
-        decoder_layers (:obj:`int`, `optional`, defaults to 12):
-            Number of decoder layers.
-        encoder_attention_heads (:obj:`int`, `optional`, defaults to 16):
-            Number of attention heads for each attention layer in the Transformer encoder.
-        decoder_attention_heads (:obj:`int`, `optional`, defaults to 16):
-            Number of attention heads for each attention layer in the Transformer decoder.
-        decoder_ffn_dim (:obj:`int`, `optional`, defaults to 4096):
-            Dimensionality of the "intermediate" (often named feed-forward) layer in decoder.
-        encoder_ffn_dim (:obj:`int`, `optional`, defaults to 4096):
-            Dimensionality of the "intermediate" (often named feed-forward) layer in decoder.
-        activation_function (:obj:`str` or :obj:`function`, `optional`, defaults to :obj:`"gelu"`):
-            The non-linear activation function (function or string) in the encoder and pooler. If string,
-            :obj:`"gelu"`, :obj:`"relu"`, :obj:`"silu"` and :obj:`"gelu_new"` are supported.
-        dropout (:obj:`float`, `optional`, defaults to 0.1):
-            The dropout probability for all fully connected layers in the embeddings, encoder, and pooler.
-        attention_dropout (:obj:`float`, `optional`, defaults to 0.0):
-            The dropout ratio for the attention probabilities.
-        activation_dropout (:obj:`float`, `optional`, defaults to 0.0):
-            The dropout ratio for activations inside the fully connected layer.
-        classifier_dropout (:obj:`float`, `optional`, defaults to 0.0):
-            The dropout ratio for classifier.
-        max_position_embeddings (:obj:`int`, `optional`, defaults to 1024):
-            The maximum sequence length that this model might ever be used with. Typically set this to something large
-            just in case (e.g., 512 or 1024 or 2048).
-        init_std (:obj:`float`, `optional`, defaults to 0.02):
-            The standard deviation of the truncated_normal_initializer for initializing all weight matrices.
-        scale_embedding (:obj:`bool`, `optional`, defaults to :obj:`False`):
-            Scale embeddings by diving by sqrt(d_model).
-        num_labels: (:obj:`int`, `optional`, defaults to 3):
-            The number of labels to use in :class:`~transformers.BartForSequenceClassification`.
-        max_eos_token_id (:obj:`int`, `optional`, defaults to 2):
-            The id of the token to force as the last generated token when :obj:`max_length` is reached. Usually set to
-            :obj:`eos_token_id`.
+            inputs_ids passed when calling BartModel, defaults to 50264.
+        d_model (int):
+            Dimensionality of the layers and the pooler layer of the BART model, defaults to 1024.
+        encoder_layers (int):
+            Number of encoder layers of the BART model. Defines the unmber of the encoder layers, defaults to 12.
+        decoder_layers (int):
+            Number of decoder layers of the BART model. Defines the unmber of the decoder layers, defaults to 12.
+        encoder_attention_heads (int):
+            Number of attention heads for each attention layer in the Transformer encoder of the BART model,
+            defaults to 16.
+        decoder_attention_heads (int):
+            Number of attention heads for each attention layer in the Transformer decoder of the BART models,
+            defaults to 16.
+        decoder_ffn_dim (int):
+            Dimensionality of the "intermediate" (often named feed-forward) layer in decoder of the BART models,
+            defaults to 4096.
+        encoder_ffn_dim (int):
+            Dimensionality of the "intermediate" (often named feed-forward)layer in decoder of the BART models,
+            defaults to 4096.
+        activation_function (str):
+            The non-linear activation function(function or string) in the encoder and pooler of the BART models,
+            defaults to :obj:`"gelu"`.
+        dropout (float):
+            The dropout probability for all fully connected layers in the embeddings, encoder, and pooler of the BART
+            model, defaults to 0.9.
+        attention_dropout (float):
+            The dropout ratio for the attention probabilities, defaults to 0.9.
+        activation_dropout (float):
+            The dropout ratio for activations inside the fully connected layer of the BART model, defaults to 0.9.
+        classifier_dropout (float):
+            The dropout ratio for classifier of the BART model, defaults to 0.9.
+         max_position_embeddings (int):
+            The maximum sequence length that this model might ever be used with. Typically set this to something
+            large just in case (e.g., 512 or 1024 or 2048), defaults to 1024.
+        init_std (float):
+            The standard deviation of the truncated_normal_initializer forinitializing all weight matrices,
+            defaults to 0.02.
+        scale_embedding (bool):
+            Scale embeddings by diving by sqrt(d_model), defaults to :obj:`False`.
+        max_eos_token_id (int):
+            The id of the token to force as the last generated token when :obj:`max_length` is reached.
+            Usually set to :obj:`eos_token_id`, defaults to 2.
     """
     model_type = "bart"
     keys_to_ignore_at_inference = ["past_key_values"]
@@ -107,12 +101,11 @@ class BartConfig:
                  activation_dropout: float = 0.9,
                  init_std=0.02,
                  scale_embedding: bool = False,
-                 num_labels: int = 3,
-                 pad_token_id=1,
-                 bos_token_id=0,
-                 eos_token_id=2,
-                 decoder_start_token_id=0,
-                 max_eos_token_id=2,
+                 pad_token_id: int = 1,
+                 bos_token_id: int = 0,
+                 eos_token_id: int = 2,
+                 decoder_start_token_id: int = 0,
+                 max_eos_token_id: int = 2,
                  **kwargs
                  ):
         super().__init__()
@@ -133,7 +126,6 @@ class BartConfig:
 
         self.init_std = init_std
         self.scale_embedding = scale_embedding  # scale factor will be sqrt(d_model) if True
-        self.num_labels = num_labels
 
         self.pad_token_id = pad_token_id
         self.bos_token_id = bos_token_id
@@ -144,6 +136,15 @@ class BartConfig:
 
     @classmethod
     def from_json_file(cls, json_file: Union[str, os.PathLike]):
+        """
+        Instantiates a BartConfig from the path to a JSON file of parameters.
+
+        Args:
+            json_file (Union[str, PathLike]): Path to the JSON file containing the parameters.
+
+        Returns:
+            BartConfig: The configuration object instantiated from that JSON file.
+        """
         config_dict = cls._dict_from_json_file(json_file)
         return cls(**config_dict)
 
@@ -310,9 +311,9 @@ class BartAttention(nn.Cell):
         """
 
         Args:
-            hidden_states:
-            key_value_states:
-            attention_mask:
+            hidden_states: the input hidden_states.
+            key_value_states: the hidden_state of key_value.
+            attention_mask: Input attention mask sequence.
 
         Returns:
 
@@ -384,9 +385,8 @@ class BartEncoderLayer(nn.Cell):
         """
 
         Args:
-            hidden_states:
-            attention_mask:
-
+            hidden_states: the input hidden_states.
+            attention_mask: Input attention mask sequence.
         Returns:
 
         """
@@ -447,10 +447,10 @@ class BartDecoderLayer(nn.Cell):
         """
 
         Args:
-            hidden_states:
-            attention_mask:
-            encoder_hidden_states:
-            encoder_attention_mask:
+            hidden_states: the input hidden_states.
+            attention_mask: Input attention mask sequence.
+            encoder_hidden_states: the hidden_states of encode layer.
+            encoder_attention_mask: the attention_mask of encode layer.
 
         Returns:
 
@@ -493,8 +493,8 @@ class BartEncoder(nn.Cell):
     :class:`BartEncoderLayer`.
 
     Args:
-        config: BartConfig
-        embed_tokens (mindspore.nn.Embedding): output embedding
+        config: BartConfig.
+        embed_tokens (mindspore.nn.Embedding): output embedding.
     """
 
     def __init__(self, config: BartConfig, embed_tokens: Optional[nn.Embedding] = None):
@@ -528,8 +528,8 @@ class BartEncoder(nn.Cell):
         r"""
 
         Args:
-            input_ids:
-            attention_mask:
+            input_ids: Input index sequence.
+            attention_mask: Input attention mask sequence.
 
         Returns:
 
@@ -614,10 +614,10 @@ class BartDecoder(nn.Cell):
         r"""
 
         Args:
-            input_ids:
-            attention_mask:
-            encoder_hidden_states:
-            encoder_attention_mask:
+            input_ids:Input index sequence.
+            attention_mask: Input attention mask sequence.
+            encoder_hidden_states: the hidden_states of encode.
+            encoder_attention_mask: the attention_mask of encode.
 
         Returns:
 
@@ -672,10 +672,10 @@ class BartModel(nn.Cell):
         """
 
         Args:
-            input_ids:
-            attention_mask:
-            decoder_input_ids:
-            decoder_attention_mask:
+            input_ids: Input index sequence.
+            attention_mask: Input attention mask sequence.
+            decoder_input_ids: Input index sequence for decoder.
+            decoder_attention_mask: Input attention mask sequence for decoder.
 
         Returns:
 
@@ -727,10 +727,10 @@ class BartForConditionalGeneration(nn.Cell):
         """
 
         Args:
-            input_ids:
-            attention_mask:
-            labels:
-            decoder_attention_mask:
+            input_ids: Input index sequence.
+            attention_mask: Input attention mask sequence.
+            labels: Label index.
+            decoder_attention_mask: Input attention mask sequence for decoder.
 
         Returns:
 
@@ -778,8 +778,8 @@ class BartForConditionalGeneration(nn.Cell):
 
         Args:
             input_ids: shape [batch_size, src_seq_len]a batch of input_ids by src_text tensor
-            attention_mask:
-            beam_width:
+            attention_mask: the mask for the attention
+            beam_width: size of the last dim of beam.
             beam_search_module:
 
         Returns: shape [batch_size, seq_len]
